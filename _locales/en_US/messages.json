@@ -1,0 +1,10 @@
+{
+  "appName": {
+    "message": "Multiple AWS Sessions",
+    "description": "The title of the application, displayed in the web store."
+  },
+  "appDesc": {
+    "message": "Lets you access multiple AWS accounts from a single browser window",
+    "description": "The description of the application, displayed in the web store."
+  }
+}

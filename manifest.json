@@ -1,0 +1,28 @@
+{
+  "name": "__MSG_appName__",
+  "version": "0.0.1",
+  "description": "__MSG_appDesc__",
+  "default_locale": "en_US",
+  "permissions": ["alarms", "declarativeNetRequest", "storage", "webRequest"],
+  "background": {
+    "service_worker": "dist/background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*.aws.amazon.com/*"],
+      "js": ["dist/content_script_isolated.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "icons": {
+    "128": "img/logo-128.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["dist/content_script_main.js"],
+      "matches": ["*://*.aws.amazon.com/*"]
+    }
+  ],
+  "host_permissions": ["*://*.aws.amazon.com/*"],
+  "manifest_version": 3
+}

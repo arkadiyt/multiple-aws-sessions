@@ -1,0 +1,11 @@
+long time pain point
+conceptually knew it was possible to hook or modify cookies (though there are some really important changes in chrome v2 / v3 manifests around _how_ to do this)
+thought: what if I could keep track of which tab receives which cookies. Then on any outgoing request from the tab, replace the cookies it sends with the ones received previoiusly for that tab
+started playing around in devtools inspector, aws sets more than a dozen cookies across various domains, regional endpoints, etc
+  but by playing around with it, for instance by deleting a cookie and seeing if i was still logged in on refresh, narrowed it down to just 3 cookies: aws-creds, aws-userInfo, and aws-userInfo-signed
+got a basic chrome extension working that hooked those cookies, but i was still getting logged out. why?
+  - dumb cookie overwriting thing with cookiejar, probably not worth mentioning
+  - opened up burp suite and started comparing my requests to unmodified logins. noticed that aws-creds value was changing, e.g. received <sample value> in set-cookie response, but then later the browser was sending <modifed value>
+  - looks like they use javascript to modify it? (wrong)
+  - time to reverse engineer. had to find where in javascript the change is happening, but there's a lot of javascript loaded. injected a script to trigger the debugger
+got past that error, home screen is loading successfully now, nice! but any page load gives me signed out error

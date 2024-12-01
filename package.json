@@ -1,0 +1,13 @@
+{
+  "dependencies": {
+    "cookiejar": "2.1.4"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "webpack-cli": "^5.1.4"
+  },
+  "jest": {
+    "transform": {}
+  },
+  "type": "module"
+}

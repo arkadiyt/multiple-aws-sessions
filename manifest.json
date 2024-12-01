@@ -1,0 +1,18 @@
+{
+  "name": "__MSG_appName__",
+  "version": "1.0.0",
+  "description": "__MSG_appDesc__",
+  "default_locale": "en",
+  "permissions": [
+    "declarativeNetRequest",
+    "storage",
+    "webRequest"
+  ],
+  "background": {
+    "service_worker": "dist/background.js"
+  },
+  "host_permissions": [
+    "https://*.aws.amazon.com/*"
+  ],
+  "manifest_version": 3
+}

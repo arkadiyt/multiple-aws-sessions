@@ -1,15 +1,19 @@
-const path = require('path');
+import path from 'node:path';
 
-module.exports = {
-  entry: './src/background.js',
+export default {
+  devtool: false,
+  entry: {
+    background: './src/background/background.js',
+    content_script_isolated: './src/content_script/content_script_isolated.js',
+    content_script_main: './src/content_script/content_script_main.js',
+  },
+  mode: 'none',
   output: {
-    filename: 'background.js',
-    path: path.resolve(__dirname, 'dist'),
+    filename: '[name].js',
+    path: path.resolve(import.meta.dirname, 'dist'),
   },
   resolve: {
     modules: ['node_modules'],
   },
-  mode: 'none',
-  devtool: false,
-  watch: true
+  watch: true,
 };

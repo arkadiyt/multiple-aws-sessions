@@ -3,16 +3,22 @@
   "version": "1.0.0",
   "description": "__MSG_appDesc__",
   "default_locale": "en",
-  "permissions": [
-    "declarativeNetRequest",
-    "storage",
-    "webRequest"
-  ],
+  "permissions": ["declarativeNetRequest", "storage", "webRequest", "declarativeNetRequestFeedback"],
   "background": {
     "service_worker": "dist/background.js"
   },
-  "host_permissions": [
-    "https://*.aws.amazon.com/*"
+  "content_scripts": [
+    {
+      "matches": ["*://*.aws.amazon.com/*"],
+      "js": ["dist/content_script_isolated.js"]
+    }
   ],
+  "web_accessible_resources": [
+    {
+      "resources": ["dist/content_script_main.js"],
+      "matches": ["*://*.aws.amazon.com/*"]
+    }
+  ],
+  "host_permissions": ["*://*.aws.amazon.com/*"],
   "manifest_version": 3
 }

@@ -1,10 +1,19 @@
-.PHONY: test lint
+.PHONY: test lint fmt build webpack clean
 
+clean:
+	rm -rf dist/*
+	
+webpack:
+	npx webpack
+	
 test:
-	node --experimental-vm-modules node_modules/jest/bin/jest.js --errorOnDeprecated --randomize --verbose
+	NODE_OPTIONS="--experimental-vm-modules" npx jest
 
 lint:
 	npx eslint
 
 fmt:
-	echo
+	npx prettier . --write
+
+build:
+	echo # TODO

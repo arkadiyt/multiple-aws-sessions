@@ -1,6 +1,5 @@
 {
   "dependencies": {
-    "cookiejar": "^2.1.4",
     "psl": "^1.14.0"
   },
   "devDependencies": {

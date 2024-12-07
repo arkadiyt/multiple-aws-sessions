@@ -1,5 +1,5 @@
 (() => {
-  let cookies;
+  let cookies = '';
 
   window.addEventListener('message', (event) => {
     if (event.source !== window) {
@@ -10,7 +10,7 @@
       return;
     }
 
-    cookies = event.data.cookies;
+    ({ cookies } = event.data);
   });
 
   Object.defineProperty(Document.prototype, 'cookie', {
@@ -22,8 +22,8 @@
       // parse it and send us back a message in the reverse direction with the new cookies
       // We intentionally do a round trip to avoid parsing in the content script
       postMessage({
-        type: 'set-cookies',
         cookies: val,
+        type: 'set-cookies',
       });
     },
   });

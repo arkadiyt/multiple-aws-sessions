@@ -109,7 +109,7 @@ describe('cookiejar', () => {
 
     [
       [{ secure: true }, ['d']],
-      [{ secure: false, domain: 'example.com' }, ['c']],
+      [{ domain: 'example.com', secure: false }, ['c']],
       [{ domain: 'example.com' }, ['c']],
       [{ domain: 'sub2.example.com' }, ['b', 'c']],
       [{ samesite: 'lax' }, ['f']],
@@ -118,7 +118,7 @@ describe('cookiejar', () => {
       [{ path: '/path1test' }, []],
       [{ path: '/path1/test' }, ['h']],
       [{ path: '/path3/asd' }, ['i']],
-      [{ httponly: false, domain: 'sub2.example.com' }, ['b', 'c']],
+      [{ domain: 'sub2.example.com', httponly: false }, ['b', 'c']],
     ].forEach(([conditions, expected]) => {
       const all = cookieJar.getCookies();
       const matched = cookieJar.matching(conditions);

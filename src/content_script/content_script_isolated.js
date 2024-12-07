@@ -40,7 +40,8 @@ Add a div to show the current account id at the top of the page
   const waitForElm = (selector) =>
     new Promise((resolve) => {
       if (document.querySelector(selector)) {
-        return resolve(document.querySelector(selector));
+        resolve(document.querySelector(selector));
+        return;
       }
 
       const observer = new MutationObserver(() => {
@@ -53,7 +54,6 @@ Add a div to show the current account id at the top of the page
       observer.observe(document.body, {
         childList: true,
         subtree: true,
-        attributes: false,
       });
     });
 

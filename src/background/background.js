@@ -25,15 +25,13 @@ const INTERCEPT_COOKIES = {
 
 // TODO cleanup
 const getNextRuleId = async () => {
-  const { rule_id } = await chrome.storage.session.get('rule_id');
-  const result = rule_id === undefined ? 1 : rule_id;
-  // console.log('getNextRuleId', result);
+  const { ruleId } = await chrome.storage.session.get('ruleId');
+  const result = ruleId === undefined ? 1 : ruleId;
   return result;
 };
 
 const saveRuleId = async (id) => {
-  // console.log('saveRuleId', id);
-  await chrome.storage.session.set({ rule_id: id });
+  await chrome.storage.session.set({ ruleId: id });
 };
 
 const getTabIdFromRequestId = (requestId) =>

@@ -5,14 +5,14 @@
     if (event.source !== window) {
       return;
     }
-  
+
     if (event.data.type !== 'set-cookies') {
       return;
     }
-  
-    cookies = event.data.cookies
+
+    cookies = event.data.cookies;
   });
-  
+
   Object.defineProperty(Document.prototype, 'cookie', {
     get() {
       return cookies;

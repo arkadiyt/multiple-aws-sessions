@@ -1,5 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
-import { CookieJar } from '../../src/background/cookie_jar.js';
+import { CookieJar, cookieHeader } from '../../src/background/cookie_jar.js';
+// TODO fix import paths so I don't have all this relative path stuff
+import { Cookie } from '../../src/background/cookie.js';
 import { cs } from './utils.js';
 
 describe('cookiejar', () => {
@@ -103,6 +105,7 @@ describe('cookiejar', () => {
         cs('g', '1', { samesite: 'strict' }),
         cs('h', '1', { path: '/path1' }),
         cs('i', '1', { path: '/path3/' }),
+        cs('j', '1', { httponly: true, path: '/path4' }),
       ],
       'https://sub1.sub2.example.com/path2',
     );
@@ -119,6 +122,7 @@ describe('cookiejar', () => {
       [{ path: '/path1/test' }, ['h']],
       [{ path: '/path3/asd' }, ['i']],
       [{ domain: 'sub2.example.com', httponly: false }, ['b', 'c']],
+      [{ httponly: true }, ['j']],
     ].forEach(([conditions, expected]) => {
       const all = cookieJar.getCookies();
       const matched = cookieJar.matching(conditions);
@@ -137,5 +141,16 @@ describe('cookiejar', () => {
 
     // TODO strictequal
     expect(cookieJar).toEqual(CookieJar.unmarshal(JSON.parse(JSON.stringify(cookieJar))));
+  });
+});
+
+describe('cookieHeader', () => {
+  it('outputs the correct header', () => {
+    expect(
+      cookieHeader([
+        new Cookie(cs('a', 1, { secure: true }), 'https://example.com'),
+        new Cookie(cs('b', 2, { httponly: true, path: '/path' }), 'https://example.com'),
+      ]),
+    ).toStrictEqual('a=1; b=2');
   });
 });

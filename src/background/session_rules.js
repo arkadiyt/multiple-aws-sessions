@@ -102,10 +102,9 @@ export const sessionRulesFromCookieJar = (cookieJar, tabId, ruleIdStart) => {
       condition: {
         // resourceTypes: ['main_frame'],
         tabIds: [tabId],
-        // TODO need to handle json.domainSpecified and add wildcard
-        // TODO need to handle json.path with directories / wildcard correctly
+
         // TODO injection from set-cookie header domain/path/etc value?
-        // TODO see if can replace with substring matching, much faster: https://developer.chrome.com/docs/extensions/reference/api/events
+        // TODO switch to regex filter for more precise control, e.g. should match aws.amazon.com and its subdomains but *aws.amazon.com matches blahaws.amazon.com
         urlFilter: `|${scheme}://${anchor}${json.domain}${path}*`,
         // TODO set this for filters elsewhere too
         resourceTypes: ['main_frame', 'sub_frame', 'xmlhttprequest'],

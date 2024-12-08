@@ -7,7 +7,6 @@ import psl from 'psl';
 
 export class CookieJar {
   constructor() {
-    // Might need to make a map if I ever need to access a specific cookie by name
     this.cookies = [];
   }
   upsertCookie(cookie, requestUrl) {
@@ -140,7 +139,6 @@ export class CookieJar {
 
       // This handles the case where httpOnly === false and cookie.secure === undefined
       // TODO consider giving defaults in Cookie (e.g. secure is false instead of undefined)
-      // TODO add unit tests for httponly matching
       if (httponly !== undefined) {
         if (!((httponly === true && cookie.httponly === true) || (httponly === false && cookie.httponly !== true))) {
           return false;
@@ -159,5 +157,4 @@ export class CookieJar {
   }
 }
 
-// TODO add unit tests
-export const cookieHeader = (cookies) => `${cookies.map((cookie) => cookie.toString()).join('; ')}; Z=1`;
+export const cookieHeader = (cookies) => cookies.map((cookie) => cookie.toString()).join('; ');

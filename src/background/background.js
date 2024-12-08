@@ -1,13 +1,3 @@
-/*
-Notes:
-TODO: handle user opening new tab from existing window
-TODO remove rules when a hooked tab navigates away from AWS, or the tab closes. also delete the cookie jar. maybe with some grace window in case someone navigates away, then clicks back
-TODO: rename to multiple-aws-sessions
-
-Next steps:
-- figure out why switching regions logs me out
-*/
-
 import { Cookie } from './cookie.js';
 import { CookieJar, cookieHeader } from './cookie_jar.js';
 import { sessionRulesFromCookieJar } from './session_rules.js';

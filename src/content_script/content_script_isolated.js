@@ -60,7 +60,8 @@
 
   const sessionData = JSON.parse((await waitForElm('meta[name=awsc-session-data]')).content);
   const div = document.createElement('div');
-  div.innerText = `${sessionData.accountAlias} - ${decodeURIComponent(sessionData.displayName)}`;
-  div.style = 'color:red;';
+  div.innerText = sessionData.accountAlias;
+  div.style =
+    'color:#ebebf0; font-size 15px; line-height: 3; text-decoration-line: underline; font-family: Amazon Ember,Helvetica Neue,Roboto,Arial,sans-serif';
   (await waitForElm('#aws-unified-search-container')).appendChild(div);
 })();

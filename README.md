@@ -1,10 +1,8 @@
 TODO Bugs:
-
 - switching regions logs you out
 - helper tooltips are reset on every login (noflush_awscnm javascript cookie)
 
 TODO features:
-
 - handle user opening new tab from existing window (incl. "view source" if possible)
 - remove rules when a hooked tab navigates away from AWS, or the tab closes. also delete the cookie jar. maybe with some grace window in case someone navigates away, then clicks back
 

@@ -141,10 +141,35 @@ clearAllSessionRules();
 
 (() => {
   const eventHandlers = {
-    'loaded': (message, tabId, cookieJar) => {},
-    'set-cookies': (message, tabId, cookieJar) => {},
+    'loaded': async (_, tab) => {
+      const cookieJars = (await chrome.storage.session.get(COOKIE_JARS))[COOKIE_JARS] || {};
+      const cookieJar = Object.hasOwn(cookieJars, tab.id) ? CookieJar.unmarshal(cookieJars[tab.id]) : new CookieJar();
+
+      const tabUrl = new URL(tab.url);
+      // TODO dry-up with the tab sending above
+      const matching = cookieJar.matching({ domain: tabUrl.hostname, path: tabUrl.pathname, httponly: false });
+      chrome.tabs.sendMessage(tab.id, {
+        cookies: cookieHeader(matching),
+        type: 'inject-cookies',
+      });
+    },
+    'parse-new-cookie': async (message, tab) => {
+      const tabUrl = new URL(tab.url);
+
+      // TODO dry this up
+      const cookieJars = (await chrome.storage.session.get(COOKIE_JARS))[COOKIE_JARS] || {};
+      const cookieJar = Object.hasOwn(cookieJars, tab.id) ? CookieJar.unmarshal(cookieJars[tab.id]) : new CookieJar();
+      cookieJar.upsertCookies([message.cookies], tab.url);
+      cookieJars[tab.id] = cookieJar;
+      chrome.storage.session.set({ [COOKIE_JARS]: cookieJars });
+      const matching = cookieJar.matching({ domain: tabUrl.hostname, path: tabUrl.pathname, httponly: false });
+      chrome.tabs.sendMessage(tab.id, {
+        cookies: cookieHeader(matching),
+        type: 'inject-cookies',
+      });
+    },
   };
-  chrome.runtime.onMessage.addListener((message, sender) => {
+  chrome.runtime.onMessage.addListener(async (message, sender) => {
     if (sender.id !== chrome.runtime.id) {
       return;
     }
@@ -157,12 +182,6 @@ clearAllSessionRules();
       return;
     }
 
-    // TODO get cookie jar for tab
-    const cookieJar = new CookieJar();
-    if (cookieJar.length === 0) {
-      return;
-    }
-
-    eventHandlers[message.type](message, sender.tab.id, cookieJar);
+    eventHandlers[message.type](message, sender.tab);
   });
 })();

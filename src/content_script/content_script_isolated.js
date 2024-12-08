@@ -24,9 +24,11 @@
     if (event.source !== window) {
       return;
     }
-    if (event.type !== 'parse-new-cookie') {
+
+    if (event.data.type !== 'parse-new-cookie') {
       return;
     }
+
     chrome.runtime.sendMessage(chrome.runtime.id, event.data);
   });
 

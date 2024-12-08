@@ -1,5 +1,9 @@
-// Cookie RFC: https://www.rfc-editor.org/rfc/rfc6265
-// TODO handle multiple cookies in single set-cookie header
+/**
+ * RFCs:
+ * Cookies: https://www.rfc-editor.org/rfc/rfc6265
+ * Samesite attribute: https://www.ietf.org/archive/id/draft-west-first-party-cookies-07.txt
+ * Partitioned attribute: https://www.ietf.org/archive/id/draft-cutler-httpbis-partitioned-cookies-01.txt
+ */
 
 export class Cookie {
   constructor(cookieStr, requestUrl) {
@@ -86,6 +90,7 @@ export class Cookie {
       }
     }
 
+    // TODO split out into method
     this.session = this.expires === undefined && this.maxage === undefined;
     // If both are set, maxage takes precedence
     if (this.maxage !== undefined) {

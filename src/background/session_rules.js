@@ -78,9 +78,8 @@ export const sessionRulesFromCookieJar = (cookieJar, tabId, ruleIdStart) => {
     }),
   );
 
+  // TODO reverse sorting above and remove reverse here
   const sortedGroups = sorted(Object.keys(grouped)).reverse();
-
-  // console.log('For cookies', cookies, 'got sortedGroups', sortedGroups, 'raw Groups', grouped);
 
   return sortedGroups.map((sortedGroup, index) => {
     const json = JSON.parse(sortedGroup);
@@ -109,7 +108,7 @@ export const sessionRulesFromCookieJar = (cookieJar, tabId, ruleIdStart) => {
         // TODO see if can replace with substring matching, much faster: https://developer.chrome.com/docs/extensions/reference/api/events
         urlFilter: `|${scheme}://${anchor}${json.domain}${path}*`,
         // TODO set this for filters elsewhere too
-        resourceTypes: ["main_frame", "sub_frame", "xmlhttprequest"]
+        resourceTypes: ['main_frame', 'sub_frame', 'xmlhttprequest'],
       },
       id: ruleIdStart + index,
       priority: index + 1,

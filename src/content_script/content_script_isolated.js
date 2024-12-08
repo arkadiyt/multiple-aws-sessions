@@ -1,6 +1,7 @@
-/*
-Inject a script that runs in the "MAIN" world / has access to hook document.cookie
-*/
+/**
+ * Inject a script that runs in the "MAIN" world / has access to hook document.cookie
+ */
+
 (() => {
   const script = document.createElement('script');
   script.src = chrome.runtime.getURL('dist/content_script_main.js');
@@ -8,9 +9,9 @@ Inject a script that runs in the "MAIN" world / has access to hook document.cook
   document.head.appendChild(script);
 })();
 
-/*
-Message passing between main and isolated scripts
-*/
+/**
+ * Message passing between main and isolated scripts
+ */
 (() => {
   chrome.runtime.onMessage.addListener((message, sender) => {
     if (sender.id !== chrome.runtime.id) {
@@ -23,7 +24,7 @@ Message passing between main and isolated scripts
     if (event.source !== window) {
       return;
     }
-    if (event.type !== 'set-cookies') {
+    if (event.type !== 'parse-new-cookie') {
       return;
     }
     chrome.runtime.sendMessage(chrome.runtime.id, event.data);
@@ -33,9 +34,9 @@ Message passing between main and isolated scripts
   chrome.runtime.sendMessage(chrome.runtime.id, { type: 'loaded' });
 })();
 
-/*
-Add a div to show the current account id at the top of the page
-*/
+/**
+ * Add a div to show the current account id at the top of the page
+ */
 (async () => {
   const waitForElm = (selector) =>
     new Promise((resolve) => {
@@ -57,12 +58,9 @@ Add a div to show the current account id at the top of the page
       });
     });
 
-  const sessionDataElm = await waitForElm('meta[name=awsc-session-data]');
-  const searchContainerElm = await waitForElm('#aws-unified-search-container');
-
-  const sessionData = JSON.parse(sessionDataElm.content);
+  const sessionData = JSON.parse((await waitForElm('meta[name=awsc-session-data]')).content);
   const div = document.createElement('div');
   div.innerText = `${sessionData.accountAlias} - ${decodeURIComponent(sessionData.displayName)}`;
   div.style = 'color:red;';
-  searchContainerElm.appendChild(div);
+  (await waitForElm('#aws-unified-search-container')).appendChild(div);
 })();

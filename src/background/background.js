@@ -4,8 +4,8 @@ TODO: handle user opening new tab from existing window
 TODO remove rules when a hooked tab navigates away from AWS, or the tab closes. also delete the cookie jar. maybe with some grace window in case someone navigates away, then clicks back
 TODO: rename to multiple-aws-sessions
 
-NEXT STEPS PICK UP FROM HERE:
-- figure out why clearing aws-userInfo cookies logs me out, they should be sent as part of server request
+Next steps:
+- figure out why switching regions logs me out
 */
 
 import { Cookie } from './cookie.js';
@@ -15,13 +15,15 @@ import { sessionRulesFromCookieJar } from './session_rules.js';
 const REQUEST_MAP = 'request_map';
 const COOKIE_JARS = 'cookie_jars';
 
-// Don't hook on non-https urls
 const INTERCEPT_URLS = ['*://*.aws.amazon.com/*'];
 const INTERCEPT_COOKIES = {
   'aws-userInfo': true,
   'aws-userInfo-signed': true,
   'aws-creds': true,
 };
+// const RESOURCE_TYPES = [
+
+// ]
 
 // TODO cleanup
 const getNextRuleId = async () => {
@@ -99,21 +101,16 @@ chrome.webRequest.onHeadersReceived.addListener(
     cookieJars[tabId] = cookieJar;
     chrome.storage.session.set({ [COOKIE_JARS]: cookieJars });
 
-    // return
-    // TODO does this affect other extensions / do I need to limit this to only my rules?
     const existingSessionRules = await chrome.declarativeNetRequest.getSessionRules();
     const ruleIds = existingSessionRules
       .filter((rule) => (rule.condition.tabIds || []).includes(tabId))
       .map((rule) => rule.id);
     const ruleIdStart = await getNextRuleId();
     const rules = sessionRulesFromCookieJar(cookieJar, tabId, ruleIdStart);
-    const deets = {
+    chrome.declarativeNetRequest.updateSessionRules({
       removeRuleIds: ruleIds,
       addRules: rules,
-    };
-    // console.log('updateSessionRules', deets);
-    // TODO could try approach where I do an initial set header, then append with a bunch of rules of lower priority. might be simpler?
-    // chrome.declarativeNetRequest.updateSessionRules(deets);
+    });
     await saveRuleId(ruleIdStart + rules.length);
 
     const tab = await chrome.tabs.get(tabId);
@@ -122,14 +119,12 @@ chrome.webRequest.onHeadersReceived.addListener(
 
       try {
         const matching = cookieJar.matching({ domain: tabUrl.hostname, path: tabUrl.pathname, httponly: false });
-        // console.log('calling matching with', { domain: tabUrl.hostname, path: tabUrl.pathname, httponly: false }, 'got ', matching, 'all cookies', cookieJar.getCookies())
         await chrome.tabs.sendMessage(tabId, {
           cookies: cookieHeader(matching),
-          type: 'set-cookies',
+          type: 'inject-cookies',
         });
       } catch (err) {
-        // On page load the content script isn't loaded / listening yet
-        // console.log('Error sending message to tabs', err);
+        // On page load the content script isn't loaded / listening yet. This is safe to ignore
       }
     }
   },
@@ -140,18 +135,19 @@ chrome.webRequest.onHeadersReceived.addListener(
   ['responseHeaders', 'extraHeaders'],
 );
 
-// const clearAllSessionRules = async () => {
-//   const ruleIds = (await chrome.declarativeNetRequest.getSessionRules()).map((rule) => rule.id);
-//   console.log('Clearing rule ids', ruleIds);
-//   chrome.declarativeNetRequest.updateSessionRules({
-//     removeRuleIds: ruleIds,
-//   });
-// };
-// clearAllSessionRules();
+const clearAllSessionRules = async () => {
+  const ruleIds = (await chrome.declarativeNetRequest.getSessionRules()).map((rule) => rule.id);
+  chrome.declarativeNetRequest.updateSessionRules({
+    removeRuleIds: ruleIds,
+  });
+};
+clearAllSessionRules();
 
-chrome.declarativeNetRequest.onRuleMatchedDebug.addListener((details) => {
-  console.log('onRuleMatchedDebug', details);
-});
+// chrome.declarativeNetRequest.onRuleMatchedDebug.addListener((details) => {
+//   if (!['sub_frame', 'xmlhttprequest', 'script', 'image', 'ping'].includes(details.request.type)) {
+//     console.log('onRuleMatchedDebug', details);
+//   }
+// });
 
 (() => {
   const eventHandlers = {
@@ -159,11 +155,17 @@ chrome.declarativeNetRequest.onRuleMatchedDebug.addListener((details) => {
     'loaded': (message, tabId, cookieJar) => {},
   };
   chrome.runtime.onMessage.addListener((message, sender) => {
-    if (Object.hasOwn(eventHandlers, message.type) === false) {
+    if (sender.id !== chrome.runtime.id) {
       return;
     }
 
-    // return if send.tab not set
+    if (sender.tab === undefined) {
+      return;
+    }
+
+    if (Object.hasOwn(eventHandlers, message.type) === false) {
+      return;
+    }
 
     // TODO get cookie jar for current tab
     const cookieJar = new CookieJar();

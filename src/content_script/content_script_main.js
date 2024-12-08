@@ -6,7 +6,7 @@
       return;
     }
 
-    if (event.data.type !== 'set-cookies') {
+    if (event.data.type !== 'inject-cookies') {
       return;
     }
 
@@ -23,7 +23,7 @@
       // We intentionally do a round trip to avoid parsing in the content script
       postMessage({
         cookies: val,
-        type: 'set-cookies',
+        type: 'parse-new-cookie',
       });
     },
   });

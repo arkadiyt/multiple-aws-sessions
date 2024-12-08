@@ -1,6 +1,6 @@
 {
   "appName": {
-    "message": "Multiple AWS Profiles",
+    "message": "Multiple AWS Sessions",
     "description": "The title of the application, displayed in the web store."
   },
   "appDesc": {

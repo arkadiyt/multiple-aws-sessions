@@ -141,8 +141,8 @@ clearAllSessionRules();
 
 (() => {
   const eventHandlers = {
-    'set-cookies': (message, tabId, cookieJar) => {},
     'loaded': (message, tabId, cookieJar) => {},
+    'set-cookies': (message, tabId, cookieJar) => {},
   };
   chrome.runtime.onMessage.addListener((message, sender) => {
     if (sender.id !== chrome.runtime.id) {
@@ -157,7 +157,7 @@ clearAllSessionRules();
       return;
     }
 
-    // TODO get cookie jar for current tab
+    // TODO get cookie jar for tab
     const cookieJar = new CookieJar();
     if (cookieJar.length === 0) {
       return;

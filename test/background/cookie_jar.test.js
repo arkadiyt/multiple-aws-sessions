@@ -1,6 +1,6 @@
-import { describe, expect, it } from '@jest/globals';
-import { CookieJar, cookieHeader } from '../../src/background/cookie_jar.js';
 // TODO fix import paths so I don't have all this relative path stuff
+import { CookieJar, cookieHeader } from '../../src/background/cookie_jar.js';
+import { describe, expect, it } from '@jest/globals';
 import { Cookie } from '../../src/background/cookie.js';
 import { cs } from './utils.js';
 
@@ -151,6 +151,6 @@ describe('cookieHeader', () => {
         new Cookie(cs('a', 1, { secure: true }), 'https://example.com'),
         new Cookie(cs('b', 2, { httponly: true, path: '/path' }), 'https://example.com'),
       ]),
-    ).toStrictEqual('a=1; b=2');
+    ).toBe('a=1; b=2');
   });
 });

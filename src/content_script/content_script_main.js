@@ -21,7 +21,6 @@
       // Send written cookies to the isolated script, which will send it to the service worker, which will
       // parse it and send us back a message in the reverse direction with the new cookies
       // We intentionally do a round trip to avoid parsing in the content script
-      console.log('setting cookie', val);
       postMessage({
         cookies: val,
         type: 'parse-new-cookie',

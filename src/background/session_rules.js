@@ -70,11 +70,11 @@ export const sessionRulesFromCookieJar = (cookieJar, tabId, ruleIdStart) => {
 
   const grouped = Object.groupBy(cookies, (cookie) =>
     JSON.stringify({
-      secure: cookie.secure,
-      samesite: cookie.samesite !== 'none',
       domain: cookie.domain,
       domainSpecified: cookie.domainSpecified,
       path: cookie.path,
+      samesite: cookie.samesite !== 'none',
+      secure: cookie.secure,
     }),
   );
 
@@ -90,7 +90,6 @@ export const sessionRulesFromCookieJar = (cookieJar, tabId, ruleIdStart) => {
 
     const rule = {
       action: {
-        type: 'modifyHeaders',
         requestHeaders: [
           {
             header: 'cookie',
@@ -98,16 +97,15 @@ export const sessionRulesFromCookieJar = (cookieJar, tabId, ruleIdStart) => {
             value: cookieHeader(matchingCookies),
           },
         ],
+        type: 'modifyHeaders',
       },
       condition: {
-        // resourceTypes: ['main_frame'],
+        // TODO set this for filters elsewhere too
+        resourceTypes: ['main_frame', 'sub_frame', 'xmlhttprequest'],
         tabIds: [tabId],
-
         // TODO injection from set-cookie header domain/path/etc value?
         // TODO switch to regex filter for more precise control, e.g. should match aws.amazon.com and its subdomains but *aws.amazon.com matches blahaws.amazon.com
         urlFilter: `|${scheme}://${anchor}${json.domain}${path}*`,
-        // TODO set this for filters elsewhere too
-        resourceTypes: ['main_frame', 'sub_frame', 'xmlhttprequest'],
       },
       id: ruleIdStart + index,
       priority: index + 1,

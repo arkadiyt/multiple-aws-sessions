@@ -127,3 +127,5 @@ export class Cookie {
     return cookie;
   }
 }
+
+export const cookieHeader = (cookies) => cookies.map((cookie) => cookie.toString()).join('; ');

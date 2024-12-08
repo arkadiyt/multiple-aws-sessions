@@ -1,5 +1,5 @@
-import { Cookie } from './cookie.js';
-import { CookieJar, cookieHeader } from './cookie_jar.js';
+import { Cookie, cookieHeader } from './cookie.js';
+import { CookieJar } from './cookie_jar.js';
 import { sessionRulesFromCookieJar } from './session_rules.js';
 
 const REQUEST_MAP = 'request_map';

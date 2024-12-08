@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it, jest } from '@jest/globals';
-import { Cookie } from '../../src/background/cookie.js';
+import { Cookie, cookieHeader } from '../../src/background/cookie.js';
 import { cs } from './utils.js';
 
 describe('cookie', () => {
@@ -105,5 +105,16 @@ describe('cookie', () => {
       // TODO using toStrictEqual causes same issue as other place where I need to explicitly define every flag
       expect(cookie).toEqual(Cookie.unmarshal(JSON.parse(JSON.stringify(cookie))));
     });
+  });
+});
+
+describe('cookieHeader', () => {
+  it('outputs the correct header', () => {
+    expect(
+      cookieHeader([
+        new Cookie(cs('a', 1, { secure: true }), 'https://example.com'),
+        new Cookie(cs('b', 2, { httponly: true, path: '/path' }), 'https://example.com'),
+      ]),
+    ).toBe('a=1; b=2');
   });
 });

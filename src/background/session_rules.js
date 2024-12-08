@@ -1,4 +1,4 @@
-import { cookieHeader } from './cookie_jar.js';
+import { cookieHeader } from './cookie.js';
 
 const sorted = (groups) =>
   groups.sort((key1, key2) => {

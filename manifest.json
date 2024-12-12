@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "__MSG_appDesc__",
   "default_locale": "en",
-  "permissions": ["declarativeNetRequest", "storage", "webRequest", "declarativeNetRequestFeedback"],
+  "permissions": ["declarativeNetRequest", "storage", "webRequest"],
   "background": {
     "service_worker": "dist/background.js"
   },

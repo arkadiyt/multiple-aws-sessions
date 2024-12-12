@@ -1,3 +1,4 @@
+import { RESOURCE_TYPES } from './common.js';
 import { cookieHeader } from './cookie.js';
 
 const sorted = (groups) =>
@@ -101,7 +102,7 @@ export const sessionRulesFromCookieJar = (cookieJar, tabId, ruleIdStart) => {
       },
       condition: {
         // TODO set this for filters elsewhere too
-        resourceTypes: ['main_frame', 'sub_frame', 'xmlhttprequest'],
+        resourceTypes: RESOURCE_TYPES,
         tabIds: [tabId],
         // TODO injection from set-cookie header domain/path/etc value?
         // TODO switch to regex filter for more precise control, e.g. should match aws.amazon.com and its subdomains but *aws.amazon.com matches blahaws.amazon.com

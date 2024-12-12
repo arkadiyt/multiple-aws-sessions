@@ -1,3 +1,4 @@
+import { RESOURCE_TYPES } from './common.js';
 import { Cookie, cookieHeader } from './cookie.js';
 import { CookieJar } from './cookie_jar.js';
 import { sessionRulesFromCookieJar } from './session_rules.js';
@@ -11,9 +12,6 @@ const INTERCEPT_COOKIES = {
   'aws-userInfo-signed': true,
   'aws-creds': true,
 };
-// const RESOURCE_TYPES = [
-
-// ]
 
 // TODO cleanup
 const getNextRuleId = async () => {
@@ -53,7 +51,7 @@ chrome.webRequest.onBeforeRequest.addListener(
   },
   {
     urls: INTERCEPT_URLS,
-    // types: ['main_frame'],
+    types: RESOURCE_TYPES,
   },
 );
 
@@ -106,47 +104,34 @@ chrome.webRequest.onHeadersReceived.addListener(
     const tab = await chrome.tabs.get(tabId);
     if (tab.url !== undefined) {
       const tabUrl = new URL(tab.url);
-
+      const matching = cookieJar.matching({ domain: tabUrl.hostname, path: tabUrl.pathname, httponly: false });
       try {
-        const matching = cookieJar.matching({ domain: tabUrl.hostname, path: tabUrl.pathname, httponly: false });
         await chrome.tabs.sendMessage(tabId, {
           cookies: cookieHeader(matching),
           type: 'inject-cookies',
         });
-      } catch (err) {
-        // On page load the content script isn't loaded / listening yet. This is safe to ignore
-      }
+      } catch (err) {}
     }
   },
   {
     urls: INTERCEPT_URLS,
-    // types: ['main_frame'],
+    types: RESOURCE_TYPES,
   },
   ['responseHeaders', 'extraHeaders'],
 );
 
-const clearAllSessionRules = async () => {
-  const ruleIds = (await chrome.declarativeNetRequest.getSessionRules()).map((rule) => rule.id);
-  chrome.declarativeNetRequest.updateSessionRules({
-    removeRuleIds: ruleIds,
-  });
-};
-clearAllSessionRules();
-
-// chrome.declarativeNetRequest.onRuleMatchedDebug.addListener((details) => {
-//   if (!['sub_frame', 'xmlhttprequest', 'script', 'image', 'ping'].includes(details.request.type)) {
-//     console.log('onRuleMatchedDebug', details);
-//   }
-// });
-
+/**
+ * Message passing with tabs
+ */
 (() => {
   const eventHandlers = {
     'loaded': async (_, tab) => {
+      // TODO dry-up with the tab sending above
+
       const cookieJars = (await chrome.storage.session.get(COOKIE_JARS))[COOKIE_JARS] || {};
       const cookieJar = Object.hasOwn(cookieJars, tab.id) ? CookieJar.unmarshal(cookieJars[tab.id]) : new CookieJar();
 
       const tabUrl = new URL(tab.url);
-      // TODO dry-up with the tab sending above
       const matching = cookieJar.matching({ domain: tabUrl.hostname, path: tabUrl.pathname, httponly: false });
       chrome.tabs.sendMessage(tab.id, {
         cookies: cookieHeader(matching),
@@ -183,5 +168,15 @@ clearAllSessionRules();
     }
 
     eventHandlers[message.type](message, sender.tab);
+  });
+})();
+
+/**
+ * Debugging
+ */
+(async () => {
+  const ruleIds = (await chrome.declarativeNetRequest.getSessionRules()).map((rule) => rule.id);
+  chrome.declarativeNetRequest.updateSessionRules({
+    removeRuleIds: ruleIds,
   });
 })();

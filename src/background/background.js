@@ -3,7 +3,7 @@ import { Cookie, cookieHeader } from './cookie.js';
 import { CookieJar } from './cookie_jar.js';
 import { sessionRulesFromCookieJar } from './session_rules.js';
 
-const REQUEST_MAP = 'request_map';
+// const REQUEST_MAP = 'request_map';
 const COOKIE_JARS = 'cookie_jars';
 
 const INTERCEPT_URLS = ['*://*.aws.amazon.com/*'];
@@ -15,30 +15,30 @@ const INTERCEPT_URLS = ['*://*.aws.amazon.com/*'];
 
 // TODO cleanup
 const getNextRuleId = async () => {
+  // todo return promise
   const { ruleId } = await chrome.storage.session.get('ruleId');
   const result = ruleId === undefined ? 1 : ruleId;
   return result;
 };
 
 const saveRuleId = async (id) => {
+  // TODO return promise
   await chrome.storage.session.set({ ruleId: id });
 };
 
 const getTabIdFromRequestId = (requestId) =>
   new Promise((resolve) => {
-    chrome.storage.session.get(REQUEST_MAP, (result) => {
-      const requestMap = result[REQUEST_MAP] || {};
-      resolve(requestMap[requestId]);
-    });
-  });
+    chrome.storage.session.get(`request_${requestId}`, (result) => {
+      resolve(result.tabId)
+    })
+  })
 
-const setTabIdForRequestId = (requestId, tabId) =>
-  new Promise((resolve) => {
-    chrome.storage.session.get(REQUEST_MAP, (result) => {
-      const requestMap = result[REQUEST_MAP] || {};
-      requestMap[requestId] = tabId;
-      chrome.storage.session.set({ [REQUEST_MAP]: requestMap }, resolve);
-    });
+const setTabIdForRequestId = (requestId, tabId) => 
+  chrome.storage.session.set({
+    [`request_${requestId}`]: {
+      tabId: tabId,
+      timestamp: Date.now(),
+    },
   });
 
 /**
@@ -75,7 +75,7 @@ chrome.tabs.onCreated.addListener((details) => {
     return;
   }
   // lookup cookie jar uuid from openedTabId, save for the new tab (details.id)
-  console.log('tabs onCreated', details);
+  // console.log('tabs onCreated', details);
 });
 
 // tab closed listener

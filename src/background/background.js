@@ -25,21 +25,25 @@ const saveRuleId = async (id) => {
 };
 
 const getTabIdFromRequestId = (requestId) =>
-  new Promise(async (resolve) => {
-    const requestMap = (await chrome.storage.session.get(REQUEST_MAP))[REQUEST_MAP] || {};
-    return resolve(requestMap[requestId]);
+  new Promise((resolve) => {
+    chrome.storage.session.get(REQUEST_MAP, (result) => {
+      const requestMap = result[REQUEST_MAP] || {};
+      resolve(requestMap[requestId]);
+    });
   });
 
 const setTabIdForRequestId = (requestId, tabId) =>
-  new Promise(async (resolve) => {
-    const requestMap = (await chrome.storage.session.get(REQUEST_MAP))[REQUEST_MAP] || {};
-    requestMap[requestId] = tabId;
-    chrome.storage.session.set({ [REQUEST_MAP]: requestMap }, resolve);
+  new Promise((resolve) => {
+    chrome.storage.session.get(REQUEST_MAP, (result) => {
+      const requestMap = result[REQUEST_MAP] || {};
+      requestMap[requestId] = tabId;
+      chrome.storage.session.set({ [REQUEST_MAP]: requestMap }, resolve);
+    });
   });
 
-  /**
+/**
    * TODO
-   * request created -> save tab id for that request id
+request created -> save tab id for that request id
 
 on header received -> lookup tab id for that request, lookup cookie jar for that tab id, save cookie jar
 
@@ -76,7 +80,6 @@ chrome.tabs.onCreated.addListener((details) => {
 
 // tab closed listener
 // delete tabid -> cookieid storage
-
 
 // Keep track of what tabs are initiating which requests
 chrome.webRequest.onBeforeRequest.addListener(
@@ -190,7 +193,7 @@ chrome.webRequest.onHeadersReceived.addListener(
       });
     },
   };
-  chrome.runtime.onMessage.addListener(async (message, sender) => {
+  chrome.runtime.onMessage.addListener((message, sender) => {
     if (sender.id !== chrome.runtime.id) {
       return;
     }

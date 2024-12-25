@@ -20,4 +20,4 @@ spent like 2 days debugging why my rules weren't matching, turns out I had the p
 trying to debug layout issues, difficult because JS is minified and don't have access to originals (sourcemaps included but give 403 when fetched, maybe only accessible to their vpn?)
 trying to go up callstack from where error is injected, but i get into react rendering. the state modification / business logic is not in the callstack, i already missed it
 install react devtools to inspect state and find it that way, proved extremely helpful for finding dom event handlers -> click handlers etc
-
+this was due to failing calls to userpref service, was getting 401s. That was due to some missing cookies because they were being set on "script" resource types which I wasn't targeting

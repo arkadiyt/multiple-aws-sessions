@@ -35,14 +35,48 @@ const setTabIdForRequestId = (requestId, tabId) =>
     const requestMap = (await chrome.storage.session.get(REQUEST_MAP))[REQUEST_MAP] || {};
     requestMap[requestId] = tabId;
     chrome.storage.session.set({ [REQUEST_MAP]: requestMap }, resolve);
-
-    // Don't let the map grow unbounded
-    // TODO convert to alarms api: https://developer.chrome.com/docs/extensions/reference/api/alarms
-    // https://developer.chrome.com/docs/extensions/develop/migrate/to-service-workers#convert-timers
-    // setTimeout(function() {
-    //   delete requestToTabMap[details.requestId];
-    // }, 60000);
   });
+
+  /**
+   * TODO
+   * request created -> save tab id for that request id
+
+on header received -> lookup tab id for that request, lookup cookie jar for that tab id, save cookie jar
+
+on tab created -> lookup cookie jar for that tab, save value for new tab
+
+
+request_<id> = {
+  tabId: '<value>',
+  timestamp: '<value>'
+}
+
+
+tab_<id> = {
+  cookieJarId: '<value>',
+}
+
+cookie_jar_<id> = {
+  cookieJar: '<value>'
+}
+
+timers:
+- once a minute, reap old request_id keys
+- once a minute, delete unreferenced cookiejars
+   */
+
+// If a new tab is opened from a tab we're hooking, make sure the new tab gets the same cookies as the existing tab
+chrome.tabs.onCreated.addListener((details) => {
+  if (details.openerTabId === undefined) {
+    return;
+  }
+  // lookup cookie jar uuid from openedTabId, save for the new tab (details.id)
+  console.log('tabs onCreated', details);
+});
+
+// tab closed listener
+// delete tabid -> cookieid storage
+
 
 // Keep track of what tabs are initiating which requests
 chrome.webRequest.onBeforeRequest.addListener(
@@ -100,7 +134,7 @@ chrome.webRequest.onHeadersReceived.addListener(
       removeRuleIds: ruleIds,
       addRules: rules,
     });
-    console.log('session rules', rules);
+    // console.log('session rules', rules);
     await saveRuleId(ruleIdStart + rules.length);
 
     const tab = await chrome.tabs.get(tabId);

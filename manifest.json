@@ -10,7 +10,8 @@
   "content_scripts": [
     {
       "matches": ["*://*.aws.amazon.com/*"],
-      "js": ["dist/content_script_isolated.js"]
+      "js": ["dist/content_script_isolated.js"],
+      "run_at": "document_end"
     }
   ],
   "web_accessible_resources": [

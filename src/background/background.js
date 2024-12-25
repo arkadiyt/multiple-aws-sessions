@@ -7,11 +7,11 @@ const REQUEST_MAP = 'request_map';
 const COOKIE_JARS = 'cookie_jars';
 
 const INTERCEPT_URLS = ['*://*.aws.amazon.com/*'];
-const INTERCEPT_COOKIES = {
-  'aws-userInfo': true,
-  'aws-userInfo-signed': true,
-  'aws-creds': true,
-};
+// const INTERCEPT_COOKIES = {
+//   'aws-userInfo': true,
+//   'aws-userInfo-signed': true,
+//   'aws-creds': true,
+// };
 
 // TODO cleanup
 const getNextRuleId = async () => {
@@ -62,9 +62,9 @@ chrome.webRequest.onHeadersReceived.addListener(
       if (header.name === 'set-cookie') {
         // TODO is this valid if there is a redirect? Is the cookie supposed to be set on the requested domain or the redirected domain?
         const cookie = new Cookie(header.value, details.url);
-        if (INTERCEPT_COOKIES[cookie.name] || cookie.name.startsWith('aws')) {
-          cookies.push(cookie);
-        }
+        // if (INTERCEPT_COOKIES[cookie.name] || cookie.name.startsWith('aws')) {
+        cookies.push(cookie);
+        // }
       }
     }
 
@@ -95,10 +95,12 @@ chrome.webRequest.onHeadersReceived.addListener(
       .map((rule) => rule.id);
     const ruleIdStart = await getNextRuleId();
     const rules = sessionRulesFromCookieJar(cookieJar, tabId, ruleIdStart);
-    chrome.declarativeNetRequest.updateSessionRules({
+    // maybe don't need to await here
+    /*await*/ chrome.declarativeNetRequest.updateSessionRules({
       removeRuleIds: ruleIds,
       addRules: rules,
     });
+    console.log('session rules', rules);
     await saveRuleId(ruleIdStart + rules.length);
 
     const tab = await chrome.tabs.get(tabId);

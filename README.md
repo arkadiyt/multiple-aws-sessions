@@ -2,7 +2,8 @@ TODO Bugs:
 
 - switching regions logs you out (only sometimes)
 - first time tooltip keeps popping up
-- "Failed to load your custom layout. Try refreshing the page." error when you "clear site data"
+- maybe some bugs would be fixed if I hooked localstorage (and sessionStorage, and indexedDB)? but I get those errors even when using only a single session
+- maybe some bugs would be fixed if I hook earlier, sometimes cookies/localstorage are read before I hook them (but got some errors if I hook _too_ early, like document is not defined)
 
 TODO features:
 

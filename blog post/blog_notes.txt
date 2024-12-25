@@ -13,3 +13,11 @@ spent a huge amount of time re-implementing cookie rules
 made some progress - could successfully delete aws-creds cookies and stay signed in. Without the extension deleting those cookies logs you out. But deleting aws-userinfo/aws-userinfo-signed still immediately logged you out via javascript. Those cookies did not have httpOnly set. So it wasn't sufficient to fake the cookie jar to the server, I also had to trick the javascript on the page that it was getting the cookies it wanted too
 hooked document.cookie, and needed to inject script from content-script into page
 spent like 2 days debugging why my rules weren't matching, turns out I had the priority on reverse order
+
+
+----
+
+trying to debug layout issues, difficult because JS is minified and don't have access to originals (sourcemaps included but give 403 when fetched, maybe only accessible to their vpn?)
+trying to go up callstack from where error is injected, but i get into react rendering. the state modification / business logic is not in the callstack, i already missed it
+install react devtools to inspect state and find it that way, proved extremely helpful for finding dom event handlers -> click handlers etc
+

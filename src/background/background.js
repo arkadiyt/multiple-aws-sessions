@@ -1,10 +1,10 @@
-import { RESOURCE_TYPES } from './common.js';
 import { Cookie, cookieHeader } from './cookie.js';
 import { CookieJar } from './cookie_jar.js';
+import { RESOURCE_TYPES } from './common.js';
 import { sessionRulesFromCookieJar } from './session_rules.js';
 
 // const REQUEST_MAP = 'request_map';
-const COOKIE_JARS = 'cookie_jars';
+// const COOKIE_JARS = 'cookie_jars';
 
 const INTERCEPT_URLS = ['*://*.aws.amazon.com/*'];
 // const INTERCEPT_COOKIES = {
@@ -29,17 +29,62 @@ const saveRuleId = async (id) => {
 const getTabIdFromRequestId = (requestId) =>
   new Promise((resolve) => {
     chrome.storage.session.get(`request_${requestId}`, (result) => {
-      resolve(result.tabId)
-    })
-  })
+      resolve(result.tabId);
+    });
+  });
 
-const setTabIdForRequestId = (requestId, tabId) => 
+const setTabIdForRequestId = (requestId, tabId) =>
   chrome.storage.session.set({
     [`request_${requestId}`]: {
-      tabId: tabId,
+      tabId,
       timestamp: Date.now(),
     },
   });
+
+const getCookieJarFromRequestId = (requestId) => {
+  return new Promise(async (resolve, reject) => {
+    const tabId = await getTabIdFromRequestId(requestId);
+    // TODO should this move into getTabIdFromRequestId?
+    if (tabId === undefined) {
+      reject(`Tab not found for request ${requestId}`)
+      return
+    }
+
+    chrome.storage.session.get(`tab_${tabId}`, (tab) => {
+      const { cookieJarId } = tab;
+      
+      if (cookieJarId === undefined) {
+        resolve([cookieJarId, [tabId], new CookieJar()])
+        return
+      }
+
+      chrome.storage.session.get(`cookie_jar_${cookieJarId}`, (cookieJarDetails) => {
+        const { tabIds, cookieJar } = cookieJarDetails
+        resolve([cookieJarId, tabIds, CookieJar.unmarshal(cookieJar)])
+      });
+    });
+  })
+};
+
+const saveCookieJar = ({cookieJarId, tabIds, cookieJar} = {}) => {
+  if (cookieJarId === undefined) {
+    cookieJarId = crypto.randomUUID();
+  }
+
+  return chrome.storage.session.set({
+    [`cookie_jar_${cookieJarId}`]: {
+      tabIds,
+      cookieJar
+    }
+  })
+}
+
+// const setCookieJarForRequestId = (requestId) => {
+// };
+
+// const getCookieJarFromTabId = (requestId) => '';
+
+// const setCookieJarForTabtId = (requestId) => '';
 
 /**
    * TODO
@@ -71,9 +116,9 @@ timers:
 
 // If a new tab is opened from a tab we're hooking, make sure the new tab gets the same cookies as the existing tab
 chrome.tabs.onCreated.addListener((details) => {
-  if (details.openerTabId === undefined) {
-    return;
-  }
+  // if (details.openerTabId === undefined) {
+  //  return
+  // }
   // lookup cookie jar uuid from openedTabId, save for the new tab (details.id)
   // console.log('tabs onCreated', details);
 });
@@ -109,29 +154,42 @@ chrome.webRequest.onHeadersReceived.addListener(
       return;
     }
 
-    const tabIdPromise = getTabIdFromRequestId(details.requestId);
-    const cookieJarsPromise = chrome.storage.session.get(COOKIE_JARS);
-    const tabId = await tabIdPromise;
-    if (tabId === undefined) {
-      console.log('Undefined tabid for request', details.requestId, details);
+    let cookieJarId, tabIds, cookieJar
+    try {
+      [cookieJarId, tabIds, cookieJar] = await getCookieJarFromRequestId(details.requestId);
+    }
+    catch (err) {
+      console.error(err);
       return;
     }
-    const cookieJars = (await cookieJarsPromise)[COOKIE_JARS] || {};
+    
+    cookieJar.upsertCookies(cookies, details.url);
+    /*await*/ saveCookieJar(cookieJarId, tabIds, cookieJar)
+    
 
-    const cookieJar = Object.hasOwn(cookieJars, tabId) ? CookieJar.unmarshal(cookieJars[tabId]) : new CookieJar();
+    // const tabIdPromise = getTabIdFromRequestId(details.requestId);
+    // const cookieJarsPromise = chrome.storage.session.get(COOKIE_JARS);
+    // const tabId = await tabIdPromise;
+    // if (tabId === undefined) {
+    //   console.log('Undefined tabid for request', details.requestId, details);
+    //   return;
+    // }
+    // const cookieJars = (await cookieJarsPromise)[COOKIE_JARS] || {};
+
+    // const cookieJar = Object.hasOwn(cookieJars, tabId) ? CookieJar.unmarshal(cookieJars[tabId]) : new CookieJar();
     // TODO is this valid if there is a redirect? Is the cookie supposed to be set on the requested domain or the redirected domain?
 
-    cookieJar.upsertCookies(cookies, details.url);
+    
 
-    cookieJars[tabId] = cookieJar;
-    chrome.storage.session.set({ [COOKIE_JARS]: cookieJars });
+    // cookieJars[tabId] = cookieJar;
+    // chrome.storage.session.set({ [COOKIE_JARS]: cookieJars });
 
     const existingSessionRules = await chrome.declarativeNetRequest.getSessionRules();
     const ruleIds = existingSessionRules
-      .filter((rule) => (rule.condition.tabIds || []).includes(tabId))
+      .filter((rule) => (rule.condition.tabIds || []).some((tabId) => tabIds.includes(tabId) ))
       .map((rule) => rule.id);
     const ruleIdStart = await getNextRuleId();
-    const rules = sessionRulesFromCookieJar(cookieJar, tabId, ruleIdStart);
+    const rules = sessionRulesFromCookieJar(cookieJar, tabIds, ruleIdStart);
     // maybe don't need to await here
     /*await*/ chrome.declarativeNetRequest.updateSessionRules({
       removeRuleIds: ruleIds,
@@ -140,16 +198,18 @@ chrome.webRequest.onHeadersReceived.addListener(
     // console.log('session rules', rules);
     await saveRuleId(ruleIdStart + rules.length);
 
-    const tab = await chrome.tabs.get(tabId);
-    if (tab.url !== undefined) {
-      const tabUrl = new URL(tab.url);
-      const matching = cookieJar.matching({ domain: tabUrl.hostname, path: tabUrl.pathname, httponly: false });
-      try {
-        await chrome.tabs.sendMessage(tabId, {
-          cookies: cookieHeader(matching),
-          type: 'inject-cookies',
-        });
-      } catch (err) {}
+    for (const tabId of tabIds) {
+      const tab = await chrome.tabs.get(tabId);
+      if (tab.url !== undefined) {
+        const tabUrl = new URL(tab.url);
+        const matching = cookieJar.matching({ domain: tabUrl.hostname, path: tabUrl.pathname, httponly: false });
+        // try {
+          /*await*/ chrome.tabs.sendMessage(tabId, {
+            cookies: cookieHeader(matching),
+            type: 'inject-cookies',
+          });
+        // } catch (err) {}
+      }
     }
   },
   {

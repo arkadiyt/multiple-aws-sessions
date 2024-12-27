@@ -66,7 +66,7 @@ const sorted = (groups) =>
     return 0;
   });
 
-export const sessionRulesFromCookieJar = (cookieJar, tabId, ruleIdStart) => {
+export const sessionRulesFromCookieJar = (cookieJar, tabIds, ruleIdStart) => {
   const cookies = cookieJar.getCookies();
 
   const grouped = Object.groupBy(cookies, (cookie) =>
@@ -103,7 +103,7 @@ export const sessionRulesFromCookieJar = (cookieJar, tabId, ruleIdStart) => {
       condition: {
         // TODO set this for filters elsewhere too
         resourceTypes: RESOURCE_TYPES,
-        tabIds: [tabId],
+        tabIds: tabIds,
         // TODO injection from set-cookie header domain/path/etc value?
         // TODO switch to regex filter for more precise control, e.g. should match aws.amazon.com and its subdomains but *aws.amazon.com matches blahaws.amazon.com
         urlFilter: `|${scheme}://${anchor}${json.domain}${path}*`,

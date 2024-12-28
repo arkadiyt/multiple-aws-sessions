@@ -22,19 +22,6 @@ export const setTabIdForRequestId = (requestId, tabId) =>
     },
   });
 
-export const getCookieJarFromRequestId = (requestId) =>
-  // Todo remove usage of new Promise
-  new Promise(async (resolve, reject) => {
-    const tabId = await getTabIdFromRequestId(requestId);
-    // TODO should this move into getTabIdFromRequestId?
-    if (typeof tabId === 'undefined') {
-      reject(`Tab not found for request ${requestId}`);
-      return;
-    }
-
-    getCookieJarFromTabId(tabId).then(resolve);
-  });
-
 export const getCookieJarFromTabId = (tabId) =>
   new Promise((resolve) => {
     const tabKey = `tab_${tabId}`;
@@ -54,13 +41,24 @@ export const getCookieJarFromTabId = (tabId) =>
     });
   });
 
+export const getCookieJarFromRequestId = (requestId) =>
+  // Todo remove usage of new Promise
+  new Promise(async (resolve, reject) => {
+    const tabId = await getTabIdFromRequestId(requestId);
+    // TODO should this move into getTabIdFromRequestId?
+    if (typeof tabId === 'undefined') {
+      reject(`Tab not found for request ${requestId}`);
+      return;
+    }
+
+    getCookieJarFromTabId(tabId).then(resolve);
+  });
+
 export const saveCookieJar = async (cookieJarId, tabIds, cookieJar) => {
-  if (typeof cookieJarId === 'undefined') {
-    cookieJarId = crypto.randomUUID();
-  }
+  const id = typeof cookieJarId === 'undefined' ? crypto.randomUUID() : cookieJarId;
 
   // TODO could optimize this / don't always need to save _all_ tabIds here
-  const val = { cookieJarId };
+  const val = { id };
   const toSet = {};
   // TODO can this be cleaner
   for (const tabId of tabIds) {
@@ -69,7 +67,7 @@ export const saveCookieJar = async (cookieJarId, tabIds, cookieJar) => {
   await chrome.storage.session.set(toSet);
 
   return chrome.storage.session.set({
-    [`cookie_jar_${cookieJarId}`]: {
+    [`cookie_jar_${id}`]: {
       cookieJar,
       tabIds,
     },

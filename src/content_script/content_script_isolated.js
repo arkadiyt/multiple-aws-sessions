@@ -1,3 +1,5 @@
+import { CMD_LOADED, CMD_PARSE_NEW_COOKIE } from '../common.js';
+
 /**
  * Inject a script that runs in the "MAIN" world / has access to hook document.cookie
  */
@@ -25,7 +27,7 @@
       return;
     }
 
-    if (event.data.type !== 'parse-new-cookie') {
+    if (event.data.mas_type !== CMD_PARSE_NEW_COOKIE) {
       return;
     }
 
@@ -33,7 +35,7 @@
   });
 
   // Tell the service worker we're loaded so it can send us any already-received cookies to inject
-  chrome.runtime.sendMessage(chrome.runtime.id, { type: 'loaded' });
+  chrome.runtime.sendMessage(chrome.runtime.id, { mas_type: CMD_LOADED });
 })();
 
 /**
@@ -63,6 +65,6 @@
   const div = document.createElement('div');
   div.innerText = sessionData.accountAlias;
   div.style =
-    'color:#ebebf0; font-size 15px; line-height: 3; text-decoration-line: underline; font-family: Amazon Ember,Helvetica Neue,Roboto,Arial,sans-serif';
+    'color:#ebebf0; font-size 15px; line-height: 3; text-decoration-line: underline; font-family: Amazon Ember, Helvetica Neue, Roboto, Arial, sans-serif';
   (await waitForElm('#aws-unified-search-container')).appendChild(div);
 })();

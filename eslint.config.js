@@ -51,7 +51,8 @@ export default [
   {
     rules: {
       'max-lines-per-function': ['error', 100],
-      'max-statements': ['error', 20],
+      'max-statements': ['error', 25],
+      'complexity': ['error', 25],
       'no-magic-numbers': 'off',
       'no-ternary': 'off',
       'one-var': ['error', 'never'],

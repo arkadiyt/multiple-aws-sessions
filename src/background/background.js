@@ -133,7 +133,7 @@ chrome.webRequest.onHeadersReceived.addListener(
 (() => {
   const eventHandlers = {
     // TODO move these string values (loaded, parse-new-cookie) into shared file between background and content script
-    'loaded': async (_, tab) => {
+    'loaded': async (_message, tab) => {
       const [, , cookieJar] = await getCookieJarFromTabId(tab.id);
       const tabUrl = new URL(tab.url);
       const matching = cookieJar.matching({ domain: tabUrl.hostname, path: tabUrl.pathname, httponly: false });
@@ -143,7 +143,6 @@ chrome.webRequest.onHeadersReceived.addListener(
       });
     },
     'parse-new-cookie': async (message, tab) => {
-      const tabUrl = new URL(tab.url);
       const [cookieJarId, tabIds, cookieJar] = await getCookieJarFromTabId(tab.id);
       cookieJar.upsertCookies([message.cookies], tab.url);
       saveCookieJar(cookieJarId, tabIds, cookieJar);

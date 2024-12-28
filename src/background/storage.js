@@ -1,4 +1,4 @@
-import { CookieJar } from './cookie_jar.js';
+import { CookieJar } from 'background/cookie_jar.js';
 
 export const getNextRuleId = async () => {
   const { ruleId } = await chrome.storage.session.get('ruleId');

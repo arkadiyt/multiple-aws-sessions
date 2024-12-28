@@ -1,4 +1,4 @@
-import { CMD_PARSE_NEW_COOKIE, CMD_INJECT_COOKIES } from '../common.js';
+import { CMD_INJECT_COOKIES, CMD_PARSE_NEW_COOKIE } from 'shared.js';
 
 (() => {
   let cookies = '';
@@ -21,8 +21,8 @@ import { CMD_PARSE_NEW_COOKIE, CMD_INJECT_COOKIES } from '../common.js';
     },
     set(val) {
       // Send written cookies to the isolated script, which will send it to the service worker, which will
-      // parse it and send us back a message in the reverse direction with the new cookies.
-      // This intentionally does a round trip to avoid parsing in the content script
+      // parse it and send us back a message in the reverse direction with the new cookies. This intentionally
+      // does a round trip to avoid parsing in the content script
       postMessage({
         cookies: val,
         mas_type: CMD_PARSE_NEW_COOKIE,

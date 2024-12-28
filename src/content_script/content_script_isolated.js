@@ -1,4 +1,4 @@
-import { CMD_LOADED, CMD_PARSE_NEW_COOKIE } from '../common.js';
+import { CMD_LOADED, CMD_PARSE_NEW_COOKIE } from 'shared.js';
 
 /**
  * Inject a script that runs in the "MAIN" world / has access to hook document.cookie

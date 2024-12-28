@@ -13,7 +13,7 @@ export default {
     path: path.resolve(import.meta.dirname, 'dist'),
   },
   resolve: {
-    modules: ['node_modules'],
+    modules: [path.resolve('src'), 'node_modules'],
   },
   watch: true,
 };

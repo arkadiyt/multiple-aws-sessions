@@ -1,4 +1,4 @@
-import { Cookie } from './cookie.js';
+import { Cookie } from 'background/cookie.js';
 import psl from 'psl';
 
 // Function domainMatchesCookieDomain(cookie, domain) {

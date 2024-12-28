@@ -1,5 +1,5 @@
-import { RESOURCE_TYPES } from './common.js';
-import { cookieHeader } from './cookie.js';
+import { RESOURCE_TYPES } from 'background/common.js';
+import { cookieHeader } from 'background/cookie.js';
 
 const sorted = (groups) =>
   groups.sort((key1, key2) => {

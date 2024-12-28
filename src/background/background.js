@@ -1,4 +1,4 @@
-import { Cookie, cookieHeader } from './cookie.js';
+import { Cookie, cookieHeader } from 'background/cookie.js';
 import {
   getCookieJarFromRequestId,
   getCookieJarFromTabId,
@@ -6,9 +6,10 @@ import {
   saveCookieJar,
   saveRuleId,
   setTabIdForRequestId,
-} from './storage.js';
-import { RESOURCE_TYPES } from './common.js';
-import { sessionRulesFromCookieJar } from './session_rules.js';
+} from 'background/storage.js';
+import { RESOURCE_TYPES } from 'background/common.js';
+import { sessionRulesFromCookieJar } from 'background/session_rules.js';
+import { CMD_INJECT_COOKIES, CMD_LOADED, CMD_PARSE_NEW_COOKIE } from 'shared.js';
 
 const INTERCEPT_URLS = ['*://*.aws.amazon.com/*'];
 /**
@@ -33,7 +34,7 @@ const sendUpdatedCookiesToTabs = async (cookieJar, tabIds) => {
     promises.push(
       chrome.tabs.sendMessage(tabId, {
         cookies: cookieHeader(matching),
-        type: 'inject-cookies',
+        mas_type: CMD_INJECT_COOKIES,
       }),
     );
   }
@@ -133,16 +134,16 @@ chrome.webRequest.onHeadersReceived.addListener(
 (() => {
   const eventHandlers = {
     // TODO move these string values (loaded, parse-new-cookie) into shared file between background and content script
-    'loaded': async (_message, tab) => {
+    [CMD_LOADED]: async (_message, tab) => {
       const [, , cookieJar] = await getCookieJarFromTabId(tab.id);
       const tabUrl = new URL(tab.url);
       const matching = cookieJar.matching({ domain: tabUrl.hostname, path: tabUrl.pathname, httponly: false });
       chrome.tabs.sendMessage(tab.id, {
         cookies: cookieHeader(matching),
-        type: 'inject-cookies',
+        mas_type: CMD_INJECT_COOKIES,
       });
     },
-    'parse-new-cookie': async (message, tab) => {
+    [CMD_PARSE_NEW_COOKIE]: async (message, tab) => {
       const [cookieJarId, tabIds, cookieJar] = await getCookieJarFromTabId(tab.id);
       cookieJar.upsertCookies([message.cookies], tab.url);
       saveCookieJar(cookieJarId, tabIds, cookieJar);
@@ -158,11 +159,11 @@ chrome.webRequest.onHeadersReceived.addListener(
       return;
     }
 
-    if (Object.hasOwn(eventHandlers, message.type) === false) {
+    if (Object.hasOwn(eventHandlers, message.mas_type) === false) {
       return;
     }
 
-    eventHandlers[message.type](message, sender.tab);
+    eventHandlers[message.mas_type](message, sender.tab);
   });
 })();
 
@@ -170,8 +171,8 @@ chrome.webRequest.onHeadersReceived.addListener(
  * Debugging
  */
 (async () => {
+  // Clear all existing session rules and storage on load
   const ruleIds = (await chrome.declarativeNetRequest.getSessionRules()).map((rule) => rule.id);
-  console.log('existing rule ids', ruleIds);
   chrome.declarativeNetRequest.updateSessionRules({
     removeRuleIds: ruleIds,
   });

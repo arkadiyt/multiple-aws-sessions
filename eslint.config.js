@@ -56,6 +56,13 @@ export default [
       'no-magic-numbers': 'off',
       'no-ternary': 'off',
       'one-var': ['error', 'never'],
+      'capitalized-comments': [
+        'error',
+        'always',
+        {
+          ignoreConsecutiveComments: true,
+        },
+      ],
     },
   },
 ];

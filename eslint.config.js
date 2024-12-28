@@ -26,6 +26,11 @@ export default [
     },
     plugins: { jest: pluginJest },
     ...pluginJest.configs['flat/all'],
+  },
+  pluginJs.configs.all,
+  eslintConfigPrettier,
+  {
+    files: ['test/**/*'],
     rules: {
       'jest/no-hooks': 'off',
     },
@@ -46,8 +51,6 @@ export default [
       ],
     },
   },
-  pluginJs.configs.all,
-  eslintConfigPrettier,
   {
     rules: {
       'capitalized-comments': [

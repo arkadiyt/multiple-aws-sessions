@@ -1,15 +1,16 @@
+import { CMD_INJECT_COOKIES, CMD_LOADED, CMD_PARSE_NEW_COOKIE } from 'shared.js';
 import { Cookie, cookieHeader } from 'background/cookie.js';
 import {
   getCookieJarFromRequestId,
   getCookieJarFromTabId,
   getNextRuleId,
+  removeTabId,
   saveCookieJar,
   saveRuleId,
   setTabIdForRequestId,
 } from 'background/storage.js';
 import { RESOURCE_TYPES } from 'background/common.js';
 import { sessionRulesFromCookieJar } from 'background/session_rules.js';
-import { CMD_INJECT_COOKIES, CMD_LOADED, CMD_PARSE_NEW_COOKIE } from 'shared.js';
 
 const INTERCEPT_URLS = ['*://*.aws.amazon.com/*'];
 /**
@@ -22,22 +23,20 @@ timers:
 // TODO cleanup
 
 const sendUpdatedCookiesToTabs = async (cookieJar, tabIds) => {
-  const promises = [];
-  for (const tabId of tabIds) {
-    const tab = await chrome.tabs.get(tabId);
-    if (typeof tab.url === 'undefined') {
-      continue;
-    }
+  const promises = tabIds.map((tabId) => {
+    chrome.tabs.get(tabId).then((tab) => {
+      if (typeof tab.url === 'undefined') {
+        return;
+      }
 
-    const tabUrl = new URL(tab.url);
-    const matching = cookieJar.matching({ domain: tabUrl.hostname, path: tabUrl.pathname, httponly: false });
-    promises.push(
-      chrome.tabs.sendMessage(tabId, {
+      const tabUrl = new URL(tab.url);
+      const matching = cookieJar.matching({ domain: tabUrl.hostname, path: tabUrl.pathname, httponly: false });
+      return chrome.tabs.sendMessage(tabId, {
         cookies: cookieHeader(matching),
         masType: CMD_INJECT_COOKIES,
-      }),
-    );
-  }
+      });
+    });
+  });
 
   try {
     await Promise.allSettled(promises);
@@ -59,10 +58,7 @@ chrome.tabs.onCreated.addListener(async (details) => {
   updateSessionRules(cookieJar, tabIds);
 });
 
-chrome.tabs.onRemoved.addListener((details) => {
-  // Delete tabid -> cookieid storage
-  // Delete tab from cookiejar storage
-});
+chrome.tabs.onRemoved.addListener(removeTabId);
 
 // Keep track of what tabs are initiating which requests
 chrome.webRequest.onBeforeRequest.addListener(

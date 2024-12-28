@@ -22,38 +22,6 @@ export const setTabIdForRequestId = (requestId, tabId) =>
     },
   });
 
-export const getCookieJarFromTabId = (tabId) =>
-  new Promise((resolve) => {
-    const tabKey = `tab_${tabId}`;
-    chrome.storage.session.get(tabKey, (tab) => {
-      const { cookieJarId } = tab[tabKey] || {};
-
-      if (typeof cookieJarId === 'undefined') {
-        resolve([cookieJarId, [tabId], new CookieJar()]);
-        return;
-      }
-
-      const cookieJarKey = `cookie_jar_${cookieJarId}`;
-      chrome.storage.session.get(cookieJarKey, (cookieJarDetails) => {
-        const { tabIds, cookieJar } = cookieJarDetails[cookieJarKey] || {};
-        resolve([cookieJarId, tabIds, CookieJar.unmarshal(cookieJar)]);
-      });
-    });
-  });
-
-export const getCookieJarFromRequestId = (requestId) =>
-  // Todo remove usage of new Promise
-  new Promise(async (resolve, reject) => {
-    const tabId = await getTabIdFromRequestId(requestId);
-    // TODO should this move into getTabIdFromRequestId?
-    if (typeof tabId === 'undefined') {
-      reject(`Tab not found for request ${requestId}`);
-      return;
-    }
-
-    getCookieJarFromTabId(tabId).then(resolve);
-  });
-
 export const saveCookieJar = async (cookieJarId, tabIds, cookieJar) => {
   const id = typeof cookieJarId === 'undefined' ? crypto.randomUUID() : cookieJarId;
 
@@ -73,3 +41,50 @@ export const saveCookieJar = async (cookieJarId, tabIds, cookieJar) => {
     },
   });
 };
+
+export const getCookieJarFromTabId = (tabId) =>
+  new Promise((resolve) => {
+    const tabKey = `tab_${tabId}`;
+    chrome.storage.session.get(tabKey, (tab) => {
+      const { cookieJarId } = tab[tabKey] || {};
+
+      if (typeof cookieJarId === 'undefined') {
+        resolve([cookieJarId, [tabId], new CookieJar()]);
+        return;
+      }
+
+      const cookieJarKey = `cookie_jar_${cookieJarId}`;
+      chrome.storage.session.get(cookieJarKey, (cookieJarDetails) => {
+        const { tabIds, cookieJar } = cookieJarDetails[cookieJarKey] || {};
+        resolve([cookieJarId, tabIds, CookieJar.unmarshal(cookieJar)]);
+      });
+    });
+  });
+
+export const removeTabId = async (tabId) => {
+  const [cookieJarId, tabIds, cookieJar] = await getCookieJarFromTabId(tabId);
+
+  if (typeof cookieJarId === 'undefined') {
+    return void 0;
+  }
+
+  const newTabIds = tabIds.filter((id) => id === tabId);
+
+  return Promise.allSettled([
+    saveCookieJar(cookieJarId, newTabIds, cookieJar),
+    chrome.session.storage.remove(`tab_${tabId}`),
+  ]);
+};
+
+export const getCookieJarFromRequestId = (requestId) =>
+  // Todo remove usage of new Promise
+  new Promise(async (resolve, reject) => {
+    const tabId = await getTabIdFromRequestId(requestId);
+    // TODO should this move into getTabIdFromRequestId?
+    if (typeof tabId === 'undefined') {
+      reject(`Tab not found for request ${requestId}`);
+      return;
+    }
+
+    getCookieJarFromTabId(tabId).then(resolve);
+  });

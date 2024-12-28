@@ -4,6 +4,8 @@ import { cs } from './utils.js';
 
 describe('cookiejar', () => {
   it('adds and gets cookies', () => {
+    expect.hasAssertions();
+
     const cookieJar = new CookieJar();
     cookieJar.upsertCookie(cs('a', 'b'), 'https://example.com');
     const cookies = cookieJar.getCookies();
@@ -14,6 +16,8 @@ describe('cookiejar', () => {
   });
 
   it("doesn't insert invalid cookies", () => {
+    expect.hasAssertions();
+
     [
       [cs('a', 'b', { secure: true }), 'http://example.com'],
       [cs('a', 'b', { domain: 'other.com' }), 'https://example.com'],
@@ -34,6 +38,8 @@ describe('cookiejar', () => {
   });
 
   it('does not insert expired cookies', () => {
+    expect.hasAssertions();
+
     const cookieJar = new CookieJar();
     cookieJar.upsertCookie(cs('a', 'b', { maxage: 0 }), 'https://example.com');
 
@@ -41,6 +47,8 @@ describe('cookiejar', () => {
   });
 
   it('removes expired cookies', () => {
+    expect.hasAssertions();
+
     const cookieJar = new CookieJar();
     cookieJar.upsertCookie(cs('a', 'b'), 'https://example.com');
     cookieJar.upsertCookie(cs('a', 'b', { maxage: 0 }), 'https://example.com');
@@ -49,6 +57,8 @@ describe('cookiejar', () => {
   });
 
   it('upserts existing cookies', () => {
+    expect.hasAssertions();
+
     [
       [[cs('a', 'b'), cs('a', 'c')], [cs('a', 'c')]],
       [[cs('a', 'b'), cs('a', 'c', { domain: 'sub.example.com' })], [cs('a', 'c', { domain: 'sub.example.com' })]],
@@ -91,6 +101,8 @@ describe('cookiejar', () => {
   });
 
   it('returns matching cookies', () => {
+    expect.hasAssertions();
+
     const cookieJar = new CookieJar();
     cookieJar.upsertCookies(
       [
@@ -131,13 +143,14 @@ describe('cookiejar', () => {
   });
 
   it('marshals and unmarshals', () => {
+    expect.hasAssertions();
+
     const cookieJar = new CookieJar();
     cookieJar.upsertCookies(
       [cs('a', '1'), cs('b', '1', { domain: 'sub2.example.com' }), cs('h', '1', { path: '/path1' })],
       'https://sub1.sub2.example.com/path2',
     );
 
-    // TODO strictequal
     expect(cookieJar).toEqual(CookieJar.unmarshal(JSON.parse(JSON.stringify(cookieJar))));
   });
 });

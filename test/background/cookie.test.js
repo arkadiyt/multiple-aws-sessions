@@ -13,6 +13,8 @@ describe('cookie', () => {
   });
 
   it('parses valid set-cookie headers', () => {
+    expect.hasAssertions();
+
     [
       ['a', 'b', {}],
       ['a', 'b', { secure: true }],
@@ -49,6 +51,8 @@ describe('cookie', () => {
   });
 
   it('throws an error for malformed set-cookie headers', () => {
+    expect.hasAssertions();
+
     [
       // TODO add more once I rework the parsing to be my own
       ['asd', 'Invalid cookie header encountered'],
@@ -60,6 +64,8 @@ describe('cookie', () => {
   });
 
   it('expires expired cookies', () => {
+    expect.hasAssertions();
+
     [
       { expires: new Date().toUTCString() },
       { expires: new Date(Date.now() - 999999).toUTCString() },
@@ -74,6 +80,8 @@ describe('cookie', () => {
   });
 
   it("doesn't expire unexpired cookies", () => {
+    expect.hasAssertions();
+
     [{ expires: new Date(Date.now() + 1000).toUTCString() }, { maxage: 1 }, { maxage: 99999 }, {}].forEach(
       (testCase) => {
         const cookie = new Cookie(cs('a', 'b', testCase), 'https://example.com');
@@ -84,12 +92,16 @@ describe('cookie', () => {
   });
 
   it('has a string representation', () => {
+    expect.hasAssertions();
+
     const cookie = new Cookie(cs('a', 'b', { secure: true }), 'https://example.com');
 
     expect(cookie.toString()).toBe('a=b');
   });
 
   it('marshals and unmarshals', () => {
+    expect.hasAssertions();
+
     [
       ['a', 'b', {}],
       ['a', 'b', { secure: true }],
@@ -104,7 +116,6 @@ describe('cookie', () => {
     ].forEach(([name, value, options]) => {
       const cookie = new Cookie(cs(name, value, options), 'https://example.com');
 
-      // TODO using toStrictEqual causes same issue as other place where I need to explicitly define every flag
       expect(cookie).toEqual(Cookie.unmarshal(JSON.parse(JSON.stringify(cookie))));
     });
   });
@@ -112,6 +123,8 @@ describe('cookie', () => {
 
 describe('cookieHeader', () => {
   it('outputs the correct header', () => {
+    expect.hasAssertions();
+
     expect(
       cookieHeader([
         new Cookie(cs('a', 1, { secure: true }), 'https://example.com'),

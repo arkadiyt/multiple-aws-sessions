@@ -83,8 +83,8 @@ describe('cookiejar', () => {
     ].forEach(([cookies, expectedResult]) => {
       const cookieJar = new CookieJar();
       cookieJar.upsertCookies(cookies, 'https://sub.example.com');
-      const result = cookieJar.getCookies(),
-        expectedCookieJar = new CookieJar();
+      const result = cookieJar.getCookies();
+      const expectedCookieJar = new CookieJar();
       expectedCookieJar.upsertCookies(expectedResult, 'https://sub.example.com');
 
       expect(result).toStrictEqual(expectedCookieJar.getCookies());
@@ -123,8 +123,8 @@ describe('cookiejar', () => {
       [{ domain: 'sub2.example.com', httponly: false }, ['b', 'c']],
       [{ httponly: true }, ['j']],
     ].forEach(([conditions, expected]) => {
-      const all = cookieJar.getCookies(),
-        matched = cookieJar.matching(conditions);
+      const all = cookieJar.getCookies();
+      const matched = cookieJar.matching(conditions);
 
       expect(matched).toHaveLength(expected.length);
       expect(matched).toStrictEqual(expected.map((name) => all.find((cookie) => cookie.name === name)));

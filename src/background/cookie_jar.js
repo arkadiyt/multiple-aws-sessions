@@ -58,9 +58,9 @@ export class CookieJar {
 
     // Matching rules described on step 11 here: https://www.rfc-editor.org/rfc/rfc6265#section-5.3
     const index = this.cookies.findIndex(
-        (other) => cookie.name === other.name && cookie.domain === other.domain && cookie.path === other.path,
-      ),
-      shouldDelete = cookie.value === '' || cookie.expired();
+      (other) => cookie.name === other.name && cookie.domain === other.domain && cookie.path === other.path,
+    );
+    const shouldDelete = cookie.value === '' || cookie.expired();
     if (index !== -1) {
       if (shouldDelete) {
         // If found an existing cookie and the new one is blank, delete the existing one

@@ -54,6 +54,7 @@ export default [
       'max-statements': ['error', 20],
       'no-magic-numbers': 'off',
       'no-ternary': 'off',
+      'one-var': ['error', 'never'],
     },
   },
 ];

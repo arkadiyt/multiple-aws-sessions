@@ -6,8 +6,8 @@ const sorted = (groups) =>
     // -1 means key1 comes before key2
     // 0 means equal
     // 1 means key1 comes after key2
-    const json1 = JSON.parse(key1),
-      json2 = JSON.parse(key2);
+    const json1 = JSON.parse(key1);
+    const json2 = JSON.parse(key2);
 
     // Secure, no domain specified, descending by path, if there are 2 equal paths then by samesite
     // https://sub.specific.domain
@@ -37,8 +37,8 @@ const sorted = (groups) =>
     // Choose the one with more parts (the more specific one) to go first, or if they have equal length
     // Then choose based on lexigraphic comparison
     if (json1.domain !== json2.domain) {
-      const json1Count = json1.domain.split('.').length - 1,
-        json2Count = json2.domain.split('.').length - 1;
+      const json1Count = json1.domain.split('.').length - 1;
+      const json2Count = json2.domain.split('.').length - 1;
       if (json1Count !== json2Count) {
         return json2Count - json1Count;
       }
@@ -51,8 +51,8 @@ const sorted = (groups) =>
 
     // TODO need to handle cases like /path1 and /path1/
     if (json1.path !== json2.path) {
-      const json1Count = json1.domain.split('/').length - 1,
-        json2Count = json2.domain.split('/').length - 1;
+      const json1Count = json1.domain.split('/').length - 1;
+      const json2Count = json2.domain.split('/').length - 1;
       if (json1Count !== json2Count) {
         return json2Count - json1Count;
       }
@@ -67,47 +67,47 @@ const sorted = (groups) =>
   });
 
 export const sessionRulesFromCookieJar = (cookieJar, tabIds, ruleIdStart) => {
-  const cookies = cookieJar.getCookies(),
-    grouped = Object.groupBy(cookies, (cookie) =>
-      JSON.stringify({
-        domain: cookie.domain,
-        domainSpecified: cookie.domainSpecified,
-        path: cookie.path,
-        samesite: cookie.samesite !== 'none',
-        secure: cookie.secure,
-      }),
-    ),
-    // TODO reverse sorting above and remove reverse here
-    sortedGroups = sorted(Object.keys(grouped)).reverse();
+  const cookies = cookieJar.getCookies();
+  const grouped = Object.groupBy(cookies, (cookie) =>
+    JSON.stringify({
+      domain: cookie.domain,
+      domainSpecified: cookie.domainSpecified,
+      path: cookie.path,
+      samesite: cookie.samesite !== 'none',
+      secure: cookie.secure,
+    }),
+  );
+  // TODO reverse sorting above and remove reverse here
+  const sortedGroups = sorted(Object.keys(grouped)).reverse();
 
   return sortedGroups.map((sortedGroup, index) => {
-    const json = JSON.parse(sortedGroup),
-      matchingCookies = cookieJar.matching(json),
-      scheme = json.secure ? 'https' : '*',
-      anchor = json.domainSpecified ? '*' : '',
-      path = json.path.slice(-1) === '/' ? json.path : `${json.path}/`,
-      rule = {
-        action: {
-          requestHeaders: [
-            {
-              header: 'cookie',
-              operation: 'set',
-              value: cookieHeader(matchingCookies),
-            },
-          ],
-          type: 'modifyHeaders',
-        },
-        condition: {
-          // TODO set this for filters elsewhere too
-          resourceTypes: RESOURCE_TYPES,
-          tabIds,
-          // TODO injection from set-cookie header domain/path/etc value?
-          // TODO switch to regex filter for more precise control, e.g. should match aws.amazon.com and its subdomains but *aws.amazon.com matches blahaws.amazon.com
-          urlFilter: `|${scheme}://${anchor}${json.domain}${path}*`,
-        },
-        id: ruleIdStart + index,
-        priority: index + 1,
-      };
+    const json = JSON.parse(sortedGroup);
+    const matchingCookies = cookieJar.matching(json);
+    const scheme = json.secure ? 'https' : '*';
+    const anchor = json.domainSpecified ? '*' : '';
+    const path = json.path.slice(-1) === '/' ? json.path : `${json.path}/`;
+    const rule = {
+      action: {
+        requestHeaders: [
+          {
+            header: 'cookie',
+            operation: 'set',
+            value: cookieHeader(matchingCookies),
+          },
+        ],
+        type: 'modifyHeaders',
+      },
+      condition: {
+        // TODO set this for filters elsewhere too
+        resourceTypes: RESOURCE_TYPES,
+        tabIds,
+        // TODO injection from set-cookie header domain/path/etc value?
+        // TODO switch to regex filter for more precise control, e.g. should match aws.amazon.com and its subdomains but *aws.amazon.com matches blahaws.amazon.com
+        urlFilter: `|${scheme}://${anchor}${json.domain}${path}*`,
+      },
+      id: ruleIdStart + index,
+      priority: index + 1,
+    };
 
     // TODO think through this
     if (json.samesite === true) {

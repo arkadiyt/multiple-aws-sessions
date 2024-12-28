@@ -14,14 +14,14 @@ export class Cookie {
     // TODO make my own parsing implementation
 
     const parts = cookieStr.split(';').filter((value) => Boolean(value));
-    let i,
-      pair = parts[0].match(/([^=]+)=([\s\S]*)/u);
+    let i;
+    let pair = parts[0].match(/([^=]+)=([\s\S]*)/u);
     if (!pair) {
       throw new Error(`Invalid cookie header encountered. Header: '${cookieStr}'`);
     }
 
-    let key = pair[1],
-      value = pair[2];
+    let key = pair[1];
+    let value = pair[2];
     if (typeof key !== 'string' || key.length === 0 || typeof value !== 'string') {
       throw new Error(`Unable to extract values from cookie header. Cookie: '${cookieStr}'`);
     }

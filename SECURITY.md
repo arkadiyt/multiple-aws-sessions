@@ -1,0 +1,1 @@
+If you think you've found a security issue, please report it to me either on my hackerone program (link) or message me on Signal (@arkadiyt.01)

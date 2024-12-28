@@ -1,17 +1,17 @@
 - get linter down to 0
 - setup github CI/CD pipeline, add dependabot config
-- submit to all web stores
+- submit to all web stores, update links below and in blog post
 - add to bug bounty program
 
 # multiple-aws-sessions
 
-### TOC
+### Table of Contents
 
-- [What's it for](https://github.com/arkadiyt/multiple-aws-sessions#whats-it-for)
-- [Installation](https://github.com/arkadiyt/multiple-aws-sessions#installation)
-- [How it works](https://github.com/arkadiyt/multiple-aws-sessions#how-it-works)
-- [Permissions](https://github.com/arkadiyt/multiple-aws-sessions#permissions)
-- [Security](https://github.com/arkadiyt/multiple-aws-sessions#security)
+- [What's it for](https://github.com/arkadiyt/multiple-aws-sessions?tab=readme-ov-file#whats-it-for)
+- [Installation](https://github.com/arkadiyt/multiple-aws-sessions?tab=readme-ov-file#installation)
+- [How it works](https://github.com/arkadiyt/multiple-aws-sessions?tab=readme-ov-file#how-it-works)
+- [Permissions](https://github.com/arkadiyt/multiple-aws-sessions?tab=readme-ov-file#permissions)
+- [Security](https://github.com/arkadiyt/multiple-aws-sessions?tab=readme-ov-file#security)
 
 ### What's it for
 
@@ -21,12 +21,12 @@ This extension removes this restriction, and allows you to be signed into as man
 
 ### Installation
 
-#### Webstores
+#### From webstores
 
-- Chrome: https://chrome.google.com/webstore/detail/xoom-redirector/ocabkmapohekeifbkoelpmppmfbcibna
-- Firefox: https://addons.mozilla.org/en-US/firefox/addon/zoom-redirector/
-- Edge: https://microsoftedge.microsoft.com/addons/detail/dkhjempaiackknhjkkaidppoepkdamen
-- Opera: https://addons.opera.com/en/extensions/details/zoom-redirector/
+- [Chrome](https://chrome.google.com/webstore/detail/xoom-redirector/ocabkmapohekeifbkoelpmppmfbcibna)
+- [Firefox](https://addons.mozilla.org/en-US/firefox/addon/zoom-redirector/)
+- [Edge](https://microsoftedge.microsoft.com/addons/detail/dkhjempaiackknhjkkaidppoepkdamen)
+- [Opera](https://addons.opera.com/en/extensions/details/zoom-redirector/)
 
 #### From source
 

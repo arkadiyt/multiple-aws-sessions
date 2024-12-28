@@ -2,9 +2,9 @@ import { CMD_INJECT_COOKIES, CMD_LOADED, CMD_PARSE_NEW_COOKIE } from 'shared.js'
 import { Cookie, cookieHeader } from 'background/cookie.js';
 import {
   clearOldRequestKeys,
-  getTabIdFromRequestId,
   getCookieJarFromTabId,
   getNextRuleId,
+  getTabIdFromRequestId,
   removeTabId,
   saveCookieJar,
   saveRuleId,

@@ -80,11 +80,3 @@ export const getTabIdFromRequestId = async (requestId) => {
   const { tabId } = result[key] || {};
   return tabId;
 };
-
-// export const getCookieJarFromRequestId = async (requestId) => {
-//   if (typeof tabId === 'undefined') {
-//     throw new Error(`Undefined tabId for request ${requestId}`);
-//   }
-
-//   return getCookieJarFromTabId(tabId);
-// };

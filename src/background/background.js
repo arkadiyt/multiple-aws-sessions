@@ -1,6 +1,7 @@
 import { CMD_INJECT_COOKIES, CMD_LOADED, CMD_PARSE_NEW_COOKIE } from 'shared.js';
 import { Cookie, cookieHeader } from 'background/cookie.js';
 import {
+  clearOldRequestKeys,
   getCookieJarFromRequestId,
   getCookieJarFromTabId,
   getNextRuleId,
@@ -13,15 +14,26 @@ import { RESOURCE_TYPES } from 'background/common.js';
 import { sessionRulesFromCookieJar } from 'background/session_rules.js';
 
 const INTERCEPT_URLS = ['*://*.aws.amazon.com/*'];
-/**
-   * TODO
-timers:
-- once a minute, reap old request_id keys
-- once a minute, delete unreferenced cookiejars
-   */
+
+(async () => {
+  const ALARM_NAME = 'reaper';
+  const alarm = await chrome.alarms.get(ALARM_NAME);
+  if (!alarm) {
+    chrome.alarms.create(ALARM_NAME, { periodInMinutes: 1 });
+  }
+
+  chrome.alarms.onAlarm.addListener((details) => {
+    if (details.name !== ALARM_NAME) {
+      return;
+    }
+
+    clearOldRequestKeys();
+  });
+})();
 
 const sendUpdatedCookiesToTabs = async (cookieJar, tabIds) => {
-  const promises = tabIds.map((tabId) => chrome.tabs.get(tabId).then((tab) => {
+  const promises = tabIds.map((tabId) =>
+    chrome.tabs.get(tabId).then((tab) => {
       if (typeof tab.url === 'undefined') {
         return;
       }
@@ -32,7 +44,8 @@ const sendUpdatedCookiesToTabs = async (cookieJar, tabIds) => {
         cookies: cookieHeader(matching),
         masType: CMD_INJECT_COOKIES,
       });
-    }));
+    }),
+  );
 
   try {
     await Promise.allSettled(promises);
@@ -58,7 +71,7 @@ chrome.tabs.onCreated.addListener(async (details) => {
   updateSessionRules(cookieJar, tabIds);
 });
 
-// TODO also need to update session rules here
+// TODO also need to update session rules here (remove from old tabs)
 chrome.tabs.onRemoved.addListener(removeTabId);
 
 // Keep track of what tabs are initiating which requests
@@ -163,11 +176,10 @@ chrome.webRequest.onHeadersReceived.addListener(
 })();
 
 /**
- * Cleanup
+ * Clear all existing session rules and storage on load
  */
-(async () => {
-  // Clear all existing session rules and storage on load
+chrome.runtime.onInstalled.addListener(async () => {
   chrome.storage.session.clear();
   const removeRuleIds = (await chrome.declarativeNetRequest.getSessionRules()).map((rule) => rule.id);
   chrome.declarativeNetRequest.updateSessionRules({ removeRuleIds });
-})();
+});

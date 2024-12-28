@@ -8,10 +8,13 @@ export const getNextRuleId = async () => {
 
 export const saveRuleId = async (id) => await chrome.storage.session.set({ ruleId: id });
 
-const getTabIdFromRequestId = async (requestId) => {
-  const key = `request_${requestId}`;
-  const result = await chrome.storage.session.get(key);
-  return (result[key] || {}).tabId;
+export const clearOldRequestKeys = async () => {
+  const keyNames = (await chrome.storage.session.getKeys()).filter((key) => key.startsWith('request_'));
+  const now = Date.now();
+  const toRemove = Object.entries(await chrome.storage.session.get(keyNames))
+    .filter(([_key, val]) => now - val.timestamp >= 60000)
+    .map(([key, _val]) => key);
+  chrome.storage.session.remove(toRemove);
 };
 
 export const setTabIdForRequestId = (requestId, tabId) =>
@@ -72,11 +75,11 @@ export const removeTabId = async (tabId) => {
 };
 
 export const getCookieJarFromRequestId = async (requestId) => {
-  const tabId = await getTabIdFromRequestId(requestId);
-  // TODO should this move into getTabIdFromRequestId?
+  const key = `request_${requestId}`;
+  const result = await chrome.storage.session.get(key);
+  const tabId = (result[key] || {}).tabId;
   if (typeof tabId === 'undefined') {
-    reject(`Tab not found for request ${requestId}`);
-    return;
+    throw new Error(`Undefined tabId for request ${requestId}`)
   }
 
   return getCookieJarFromTabId(tabId);

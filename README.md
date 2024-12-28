@@ -1,3 +1,6 @@
+- get linter down to 0
+- setup github CI/CD pipeline
+
 TODO Bugs:
 
 TODO features:

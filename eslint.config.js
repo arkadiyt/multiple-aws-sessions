@@ -47,7 +47,7 @@ export default [
   eslintConfigPrettier,
   {
     rules: {
-      'max-statements': ['error', 20]
+      'max-statements': ['error', 20],
     },
   },
 ];

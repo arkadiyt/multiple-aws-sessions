@@ -41,27 +41,26 @@
  */
 (async () => {
   const waitForElm = (selector) =>
-    new Promise((resolve) => {
-      if (document.querySelector(selector)) {
-        resolve(document.querySelector(selector));
-        return;
-      }
-
-      const observer = new MutationObserver(() => {
+      new Promise((resolve) => {
         if (document.querySelector(selector)) {
-          observer.disconnect();
           resolve(document.querySelector(selector));
+          return;
         }
-      });
 
-      observer.observe(document.body, {
-        childList: true,
-        subtree: true,
-      });
-    }),
+        const observer = new MutationObserver(() => {
+          if (document.querySelector(selector)) {
+            observer.disconnect();
+            resolve(document.querySelector(selector));
+          }
+        });
 
-   sessionData = JSON.parse((await waitForElm('meta[name=awsc-session-data]')).content),
-   div = document.createElement('div');
+        observer.observe(document.body, {
+          childList: true,
+          subtree: true,
+        });
+      }),
+    sessionData = JSON.parse((await waitForElm('meta[name=awsc-session-data]')).content),
+    div = document.createElement('div');
   div.innerText = sessionData.accountAlias;
   div.style =
     'color:#ebebf0; font-size 15px; line-height: 3; text-decoration-line: underline; font-family: Amazon Ember,Helvetica Neue,Roboto,Arial,sans-serif';

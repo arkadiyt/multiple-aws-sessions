@@ -2,7 +2,7 @@ import { CookieJar } from './cookie_jar.js';
 
 export const getNextRuleId = async () => {
   const { ruleId } = await chrome.storage.session.get('ruleId'),
-   result = ruleId === undefined ? 1 : ruleId;
+    result = ruleId === undefined ? 1 : ruleId;
   return result;
 };
 
@@ -10,7 +10,7 @@ export const saveRuleId = async (id) => await chrome.storage.session.set({ ruleI
 
 const getTabIdFromRequestId = async (requestId) => {
   const key = `request_${requestId}`,
-   result = await chrome.storage.session.get(key);
+    result = await chrome.storage.session.get(key);
   return (result[key] || {}).tabId;
 };
 
@@ -61,7 +61,7 @@ export const saveCookieJar = async (cookieJarId, tabIds, cookieJar) => {
 
   // TODO could optimize this / don't always need to save _all_ tabIds here
   const val = { cookieJarId },
-   toSet = {};
+    toSet = {};
   // TODO can this be cleaner
   for (const tabId of tabIds) {
     toSet[`tab_${tabId}`] = val;

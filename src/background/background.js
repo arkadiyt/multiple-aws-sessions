@@ -27,7 +27,7 @@ const INTERCEPT_URLS = ['*://*.aws.amazon.com/*'];
       return;
     }
 
-    clearOldRequestKeys();
+    clearOldRequestKeys(60000);
   });
 })();
 
@@ -39,7 +39,7 @@ const sendUpdatedCookiesToTabs = async (cookieJar, tabIds) => {
       }
 
       const tabUrl = new URL(tab.url);
-      const matching = cookieJar.matching({ domain: tabUrl.hostname, path: tabUrl.pathname, httponly: false });
+      const matching = cookieJar.matching({ domain: tabUrl.hostname, httponly: false, path: tabUrl.pathname });
       return chrome.tabs.sendMessage(tabId, {
         cookies: cookieHeader(matching),
         masType: CMD_INJECT_COOKIES,
@@ -131,8 +131,8 @@ chrome.webRequest.onHeadersReceived.addListener(
     /*Await*/ updateSessionRules(cookieJar, tabIds);
   },
   {
-    urls: INTERCEPT_URLS,
     types: RESOURCE_TYPES,
+    urls: INTERCEPT_URLS,
   },
   ['responseHeaders', 'extraHeaders'],
 );
@@ -145,7 +145,7 @@ chrome.webRequest.onHeadersReceived.addListener(
     [CMD_LOADED]: async (_message, tab) => {
       const [, , cookieJar] = await getCookieJarFromTabId(tab.id);
       const tabUrl = new URL(tab.url);
-      const matching = cookieJar.matching({ domain: tabUrl.hostname, path: tabUrl.pathname, httponly: false });
+      const matching = cookieJar.matching({ domain: tabUrl.hostname, httponly: false, path: tabUrl.pathname });
       chrome.tabs.sendMessage(tab.id, {
         cookies: cookieHeader(matching),
         masType: CMD_INJECT_COOKIES,

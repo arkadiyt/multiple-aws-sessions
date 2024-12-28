@@ -1,6 +1,6 @@
 // Import { describe, expect, it } from '@jest/globals';
-// Import { exportedForTestingOnly, sessionRulesFromCookieJar } from '../src/background/session_rules.js';
-// Import { CookieJar } from '../src/background/cookie_jar.js';
+// Import { exportedForTestingOnly, sessionRulesFromCookieJar } from 'background/session_rules.js';
+// Import { CookieJar } from 'background/cookie_jar.js';
 // Import { cs } from './utils.js';
 // Const { sorted } = exportedForTestingOnly;
 

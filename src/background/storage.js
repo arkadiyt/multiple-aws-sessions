@@ -8,11 +8,11 @@ export const getNextRuleId = async () => {
 
 export const saveRuleId = async (id) => await chrome.storage.session.set({ ruleId: id });
 
-export const clearOldRequestKeys = async () => {
+export const clearOldRequestKeys = async (expiration) => {
   const keyNames = (await chrome.storage.session.getKeys()).filter((key) => key.startsWith('request_'));
   const now = Date.now();
   const toRemove = Object.entries(await chrome.storage.session.get(keyNames))
-    .filter(([_key, val]) => now - val.timestamp >= 60000)
+    .filter(([_key, val]) => now - val.timestamp >= expiration)
     .map(([key, _val]) => key);
   chrome.storage.session.remove(toRemove);
 };
@@ -25,7 +25,7 @@ export const setTabIdForRequestId = (requestId, tabId) =>
     },
   });
 
-export const saveCookieJar = async (cookieJarId, tabIds, cookieJar) => {
+export const saveCookieJar = (cookieJarId, tabIds, cookieJar) => {
   const id = typeof cookieJarId === 'undefined' ? crypto.randomUUID() : cookieJarId;
   const toSave = {
     [`cookie_jar_${id}`]: {

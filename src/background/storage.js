@@ -58,7 +58,7 @@ export const saveCookieJar = async (cookieJarId, tabIds, cookieJar) => {
   const id = typeof cookieJarId === 'undefined' ? crypto.randomUUID() : cookieJarId;
 
   // TODO could optimize this / don't always need to save _all_ tabIds here
-  const val = { id };
+  const val = { cookieJarId: id };
   const toSet = {};
   // TODO can this be cleaner
   for (const tabId of tabIds) {

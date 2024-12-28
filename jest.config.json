@@ -1,5 +1,6 @@
 {
   "errorOnDeprecated": true,
   "randomize": true,
-  "verbose": true
+  "verbose": true,
+  "modulePaths": ["src"]
 }

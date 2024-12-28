@@ -8,7 +8,7 @@ import { CMD_INJECT_COOKIES, CMD_PARSE_NEW_COOKIE } from 'shared.js';
       return;
     }
 
-    if (event.data.mas_type !== CMD_INJECT_COOKIES) {
+    if (event.data.masType !== CMD_INJECT_COOKIES) {
       return;
     }
 
@@ -25,7 +25,7 @@ import { CMD_INJECT_COOKIES, CMD_PARSE_NEW_COOKIE } from 'shared.js';
       // does a round trip to avoid parsing in the content script
       postMessage({
         cookies: val,
-        mas_type: CMD_PARSE_NEW_COOKIE,
+        masType: CMD_PARSE_NEW_COOKIE,
       });
     },
   });

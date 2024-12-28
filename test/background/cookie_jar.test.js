@@ -1,6 +1,5 @@
-// TODO fix import paths so I don't have all this relative path stuff
 import { describe, expect, it } from '@jest/globals';
-import { CookieJar } from '../../src/background/cookie_jar.js';
+import { CookieJar } from 'background/cookie_jar.js';
 import { cs } from './utils.js';
 
 describe('cookiejar', () => {

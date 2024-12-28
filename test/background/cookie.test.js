@@ -1,5 +1,5 @@
+import { Cookie, cookieHeader } from 'background/cookie.js';
 import { afterAll, beforeAll, describe, expect, it, jest } from '@jest/globals';
-import { Cookie, cookieHeader } from '../../src/background/cookie.js';
 import { cs } from './utils.js';
 
 describe('cookie', () => {

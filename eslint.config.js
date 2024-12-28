@@ -50,12 +50,6 @@ export default [
   eslintConfigPrettier,
   {
     rules: {
-      'max-lines-per-function': ['error', 100],
-      'max-statements': ['error', 25],
-      'complexity': ['error', 25],
-      'no-magic-numbers': 'off',
-      'no-ternary': 'off',
-      'one-var': ['error', 'never'],
       'capitalized-comments': [
         'error',
         'always',
@@ -63,6 +57,13 @@ export default [
           ignoreConsecutiveComments: true,
         },
       ],
+      'complexity': ['error', 25],
+      'max-lines-per-function': ['error', 100],
+      'max-statements': ['error', 25],
+      'no-magic-numbers': 'off',
+      'no-ternary': 'off',
+      'no-void': 'off',
+      'one-var': ['error', 'never'],
     },
   },
 ];

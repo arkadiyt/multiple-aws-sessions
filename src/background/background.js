@@ -34,7 +34,7 @@ const sendUpdatedCookiesToTabs = async (cookieJar, tabIds) => {
     promises.push(
       chrome.tabs.sendMessage(tabId, {
         cookies: cookieHeader(matching),
-        mas_type: CMD_INJECT_COOKIES,
+        masType: CMD_INJECT_COOKIES,
       }),
     );
   }
@@ -111,10 +111,9 @@ chrome.webRequest.onHeadersReceived.addListener(
     try {
       [cookieJarId, tabIds, cookieJar] = await getCookieJarFromRequestId(details.requestId);
     } catch (err) {
-      console.warn(err, details);
+      console.warn(err);
       return;
     }
-
     // TODO is this valid if there is a redirect? Is the cookie supposed to be set on the requested domain or the redirected domain?
     cookieJar.upsertCookies(cookies, details.url);
     /*Await*/ saveCookieJar(cookieJarId, tabIds, cookieJar);
@@ -140,7 +139,7 @@ chrome.webRequest.onHeadersReceived.addListener(
       const matching = cookieJar.matching({ domain: tabUrl.hostname, path: tabUrl.pathname, httponly: false });
       chrome.tabs.sendMessage(tab.id, {
         cookies: cookieHeader(matching),
-        mas_type: CMD_INJECT_COOKIES,
+        masType: CMD_INJECT_COOKIES,
       });
     },
     [CMD_PARSE_NEW_COOKIE]: async (message, tab) => {
@@ -159,11 +158,11 @@ chrome.webRequest.onHeadersReceived.addListener(
       return;
     }
 
-    if (Object.hasOwn(eventHandlers, message.mas_type) === false) {
+    if (Object.hasOwn(eventHandlers, message.masType) === false) {
       return;
     }
 
-    eventHandlers[message.mas_type](message, sender.tab);
+    eventHandlers[message.masType](message, sender.tab);
   });
 })();
 

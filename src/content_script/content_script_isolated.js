@@ -3,7 +3,6 @@ import { CMD_LOADED, CMD_PARSE_NEW_COOKIE } from 'shared.js';
 /**
  * Inject a script that runs in the "MAIN" world / has access to hook document.cookie
  */
-
 (() => {
   const script = document.createElement('script');
   script.src = chrome.runtime.getURL('dist/content_script_main.js');
@@ -27,7 +26,7 @@ import { CMD_LOADED, CMD_PARSE_NEW_COOKIE } from 'shared.js';
       return;
     }
 
-    if (event.data.mas_type !== CMD_PARSE_NEW_COOKIE) {
+    if (event.data.masType !== CMD_PARSE_NEW_COOKIE) {
       return;
     }
 
@@ -35,7 +34,7 @@ import { CMD_LOADED, CMD_PARSE_NEW_COOKIE } from 'shared.js';
   });
 
   // Tell the service worker we're loaded so it can send us any already-received cookies to inject
-  chrome.runtime.sendMessage(chrome.runtime.id, { mas_type: CMD_LOADED });
+  chrome.runtime.sendMessage(chrome.runtime.id, { masType: CMD_LOADED });
 })();
 
 /**

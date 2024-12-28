@@ -1,15 +1,15 @@
 export const cs = (name, value, { domain, path, secure, httponly, samesite, partitioned, expires, maxage } = {}) => {
   let val = `${name}=${value};`;
-  if (domain !== undefined) {
+  if (typeof domain !== 'undefined') {
     val += `Domain=${domain};`;
   }
-  if (path !== undefined) {
+  if (typeof path !== 'undefined') {
     val += `Path=${path};`;
   }
-  if (expires !== undefined) {
+  if (typeof expires !== 'undefined') {
     val += `Expires=${expires};`;
   }
-  if (maxage !== undefined) {
+  if (typeof maxage !== 'undefined') {
     val += `Max-Age=${maxage};`;
   }
   if (secure === true) {
@@ -18,7 +18,7 @@ export const cs = (name, value, { domain, path, secure, httponly, samesite, part
   if (httponly === true) {
     val += 'httpOnly;';
   }
-  if (samesite !== undefined) {
+  if (typeof samesite !== 'undefined') {
     val += `SameSite=${samesite};`;
   }
   if (partitioned === true) {

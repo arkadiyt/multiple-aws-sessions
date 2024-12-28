@@ -14,15 +14,15 @@ export class Cookie {
     // TODO make my own parsing implementation
 
     const parts = cookieStr.split(';').filter((value) => Boolean(value));
-    let i;
+    let i,
 
-    let pair = parts[0].match(/([^=]+)=([\s\S]*)/u);
+     pair = parts[0].match(/([^=]+)=([\s\S]*)/u);
     if (!pair) {
       throw new Error(`Invalid cookie header encountered. Header: '${cookieStr}'`);
     }
 
-    let key = pair[1];
-    let value = pair[2];
+    let key = pair[1],
+     value = pair[2];
     if (typeof key !== 'string' || key.length === 0 || typeof value !== 'string') {
       throw new Error(`Unable to extract values from cookie header. Cookie: '${cookieStr}'`);
     }
@@ -40,13 +40,13 @@ export class Cookie {
         : url.pathname.replace(/\/$/u, '');
 
     // TODO
-    // this.httponly = false;
-    // this.expires = undefined;
-    // this.maxage = undefined;
-    // this.expirationTimestamp = undefined;
-    // this.secure = false;
-    // this.samesite = 'lax'; // TODO is this correct default?
-    // this.partitioned = false;
+    // This.httponly = false;
+    // This.expires = undefined;
+    // This.maxage = undefined;
+    // This.expirationTimestamp = undefined;
+    // This.secure = false;
+    // This.samesite = 'lax'; // TODO is this correct default?
+    // This.partitioned = false;
 
     for (i = 1; i < parts.length; i += 1) {
       pair = parts[i].match(/([^=]+)(?:=([\s\S]*))?/u);

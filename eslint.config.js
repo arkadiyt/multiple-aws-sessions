@@ -34,24 +34,20 @@ export default [
         ...globals.node,
       },
     },
+    rules: {
+      camelcase: [
+        'error',
+        {
+          properties: 'never',
+        },
+      ],
+    },
   },
   pluginJs.configs.all,
   eslintConfigPrettier,
   {
     rules: {
-      // TODO re-enable later
-      'capitalized-comments': 'off',
-      'no-undefined': 'off',
-      'jest/no-commented-out-tests': 'off',
-      'no-magic-numbers': 'off',
-      'one-var': 'off',
-      'jest/prefer-expect-assertions': 'off',
-      'no-warning-comments': 'off',
-      'jest/no-conditional-in-test': 'off',
-      // leave off permanently
-      'jest/no-hooks': 'off',
-      'no-ternary': 'off',
-      'jest/max-expects': 'off',
+      'max-statements': ['error', 20]
     },
   },
 ];

@@ -1,9 +1,6 @@
 TODO Bugs:
 
-- race conditions (or something else) still lead to rule id collissions ("Uncaught (in promise) Error: Rule with id 414 does not have a unique ID.)
-
 TODO features:
-(IN PROGRESS) - handle user opening new tab from existing window (incl. "view source" if possible)
 
 - remove rules when a hooked tab navigates away from AWS, or the tab closes. also delete the cookie jar. maybe with some grace window in case someone navigates away, then clicks back
 

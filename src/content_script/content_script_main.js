@@ -19,7 +19,7 @@
     },
     set(val) {
       // Send written cookies to the isolated script, which will send it to the service worker, which will
-      // parse it and send us back a message in the reverse direction with the new cookies
+      // Parse it and send us back a message in the reverse direction with the new cookies
       // This intentionally does a round trip to avoid parsing in the content script
       postMessage({
         cookies: val,

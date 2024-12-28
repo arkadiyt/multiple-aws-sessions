@@ -55,6 +55,22 @@ const sendUpdatedCookiesToTabs = async (cookieJar, tabIds) => {
   }
 };
 
+const updateSessionRules = async (cookieJar, tabIds) => {
+  const existingSessionRules = await chrome.declarativeNetRequest.getSessionRules();
+  const ruleIds = existingSessionRules
+    .filter((rule) => (rule.condition.tabIds || []).some((tabId) => tabIds.includes(tabId)))
+    .map((rule) => rule.id);
+  const ruleIdStart = await getNextRuleId();
+  const rules = sessionRulesFromCookieJar(cookieJar, tabIds, ruleIdStart);
+  /*Await*/ chrome.declarativeNetRequest.updateSessionRules({
+    addRules: rules,
+    removeRuleIds: ruleIds,
+  });
+  await saveRuleId(ruleIdStart + rules.length);
+
+  sendUpdatedCookiesToTabs(cookieJar, tabIds);
+};
+
 // If a new tab is opened from a tab we're hooking, make sure the new tab gets the same cookies as the existing tab
 chrome.tabs.onCreated.addListener(async (details) => {
   if (typeof details.openerTabId === 'undefined') {
@@ -80,26 +96,10 @@ chrome.webRequest.onBeforeRequest.addListener(
     setTabIdForRequestId(details.requestId, details.tabId);
   },
   {
-    urls: INTERCEPT_URLS,
     types: RESOURCE_TYPES,
+    urls: INTERCEPT_URLS,
   },
 );
-
-const updateSessionRules = async (cookieJar, tabIds) => {
-  const existingSessionRules = await chrome.declarativeNetRequest.getSessionRules();
-  const ruleIds = existingSessionRules
-    .filter((rule) => (rule.condition.tabIds || []).some((tabId) => tabIds.includes(tabId)))
-    .map((rule) => rule.id);
-  const ruleIdStart = await getNextRuleId();
-  const rules = sessionRulesFromCookieJar(cookieJar, tabIds, ruleIdStart);
-  /*Await*/ chrome.declarativeNetRequest.updateSessionRules({
-    removeRuleIds: ruleIds,
-    addRules: rules,
-  });
-  await saveRuleId(ruleIdStart + rules.length);
-
-  sendUpdatedCookiesToTabs(cookieJar, tabIds);
-};
 
 chrome.webRequest.onHeadersReceived.addListener(
   async (details) => {
@@ -127,7 +127,6 @@ chrome.webRequest.onHeadersReceived.addListener(
     // TODO is this valid if there is a redirect? Is the cookie supposed to be set on the requested domain or the redirected domain?
     cookieJar.upsertCookies(cookies, details.url);
     /*Await*/ saveCookieJar(cookieJarId, tabIds, cookieJar);
-
     /*Await*/ updateSessionRules(cookieJar, tabIds);
   },
   {

@@ -64,6 +64,7 @@ export default [
       'max-lines-per-function': ['error', 100],
       'max-statements': ['error', 25],
       'no-console': ['error', { allow: ['warn', 'error'] }],
+      'no-inline-comments': 'off',
       'no-magic-numbers': 'off',
       'no-ternary': 'off',
       'no-unused-vars': ["error", { "argsIgnorePattern": "^_" }],

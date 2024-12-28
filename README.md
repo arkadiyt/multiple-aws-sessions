@@ -1,5 +1,4 @@
 - get linter down to 0
-- setup github CI/CD pipeline, add dependabot config
 - submit to all web stores, update links below and in blog post, update changelog
 - add to bug bounty program
 

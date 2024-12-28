@@ -1,6 +1,6 @@
 - get linter down to 0
 - setup github CI/CD pipeline, add dependabot config
-- submit to all web stores, update links below and in blog post
+- submit to all web stores, update links below and in blog post, update changelog
 - add to bug bounty program
 
 # multiple-aws-sessions
@@ -39,7 +39,7 @@ npm install
 npx webpack --no-watch
 ```
 
-2. Go into your chrome extension settings (`chrome://extensions/`) and check the "Developer mode" slider in the upper right corner
+2. Enable loading unpacked extensions in your browser. In Google Chrome this can be done by going into your extension settings (`chrome://extensions/`) and checking the "Developer mode" slider in the upper right corner
 
 3. Click the "Load unpacked" button that appeared in the upper left corner and select the folder you cloned this repo into
 

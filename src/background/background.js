@@ -20,11 +20,8 @@ timers:
 - once a minute, delete unreferenced cookiejars
    */
 
-// TODO cleanup
-
 const sendUpdatedCookiesToTabs = async (cookieJar, tabIds) => {
-  const promises = tabIds.map((tabId) => {
-    chrome.tabs.get(tabId).then((tab) => {
+  const promises = tabIds.map((tabId) => chrome.tabs.get(tabId).then((tab) => {
       if (typeof tab.url === 'undefined') {
         return;
       }
@@ -35,8 +32,7 @@ const sendUpdatedCookiesToTabs = async (cookieJar, tabIds) => {
         cookies: cookieHeader(matching),
         masType: CMD_INJECT_COOKIES,
       });
-    });
-  });
+    }));
 
   try {
     await Promise.allSettled(promises);
@@ -53,11 +49,16 @@ chrome.tabs.onCreated.addListener(async (details) => {
   }
 
   const [cookieJarId, tabIds, cookieJar] = await getCookieJarFromTabId(details.openerTabId);
+  if (typeof cookieJarId === 'undefined') {
+    return;
+  }
+
   tabIds.push(details.id);
   saveCookieJar(cookieJarId, tabIds, cookieJar);
   updateSessionRules(cookieJar, tabIds);
 });
 
+// TODO also need to update session rules here
 chrome.tabs.onRemoved.addListener(removeTabId);
 
 // Keep track of what tabs are initiating which requests
@@ -128,7 +129,6 @@ chrome.webRequest.onHeadersReceived.addListener(
  */
 (() => {
   const eventHandlers = {
-    // TODO move these string values (loaded, parse-new-cookie) into shared file between background and content script
     [CMD_LOADED]: async (_message, tab) => {
       const [, , cookieJar] = await getCookieJarFromTabId(tab.id);
       const tabUrl = new URL(tab.url);
@@ -163,13 +163,11 @@ chrome.webRequest.onHeadersReceived.addListener(
 })();
 
 /**
- * Debugging
+ * Cleanup
  */
 (async () => {
   // Clear all existing session rules and storage on load
-  const ruleIds = (await chrome.declarativeNetRequest.getSessionRules()).map((rule) => rule.id);
-  chrome.declarativeNetRequest.updateSessionRules({
-    removeRuleIds: ruleIds,
-  });
-  await chrome.storage.session.clear();
+  chrome.storage.session.clear();
+  const removeRuleIds = (await chrome.declarativeNetRequest.getSessionRules()).map((rule) => rule.id);
+  chrome.declarativeNetRequest.updateSessionRules({ removeRuleIds });
 })();

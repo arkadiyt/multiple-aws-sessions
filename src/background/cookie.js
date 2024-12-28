@@ -7,28 +7,16 @@
 
 export class Cookie {
   constructor(cookieStr, requestUrl) {
-    this.parse(cookieStr, requestUrl);
+    this.parse2(cookieStr, requestUrl);
   }
 
-  parse(cookieStr, requestUrl) {
-    // TODO make my own parsing implementation
-
-    const parts = cookieStr.split(';').filter((value) => Boolean(value));
-    let i;
-    let pair = parts[0].match(/([^=]+)=([\s\S]*)/u);
-    if (!pair) {
-      throw new Error(`Invalid cookie header encountered. Header: '${cookieStr}'`);
+  parse2(cookieStr, requestUrl) {
+    const parts = cookieStr.split(';').filter((str) => str != '');
+    try {
+      [, this.name, this.value] = parts.shift().match(/([^=]+)=(.*)/u);
+    } catch {
+      throw new Error('Invalid cookie header');
     }
-
-    let key = pair[1];
-    let value = pair[2];
-    if (typeof key !== 'string' || key.length === 0 || typeof value !== 'string') {
-      throw new Error(`Unable to extract values from cookie header. Cookie: '${cookieStr}'`);
-    }
-
-    this.name = key;
-    this.value = value;
-
     const url = new URL(requestUrl);
     this.domainSpecified = false;
     this.domain = url.hostname;
@@ -37,60 +25,56 @@ export class Cookie {
       typeof url.pathname === 'undefined' || url.pathname === '/' || !url.pathname.startsWith('/')
         ? '/'
         : url.pathname.replace(/\/$/u, '');
+    // this.httponly = false;
+    // this.expires = undefined;
+    // this.maxage = undefined;
+    // this.expirationTimestamp = undefined;
+    // this.secure = false;
+    // this.samesite = 'lax';
+    // this.partitioned = false;
 
-    // TODO
-    // This.httponly = false;
-    // This.expires = undefined;
-    // This.maxage = undefined;
-    // This.expirationTimestamp = undefined;
-    // This.secure = false;
-    // This.samesite = 'lax'; // TODO is this correct default?
-    // This.partitioned = false;
-
-    for (i = 1; i < parts.length; i += 1) {
-      pair = parts[i].match(/([^=]+)(?:=([\s\S]*))?/u);
-      key = pair[1].trim().toLowerCase();
-      value = pair[2];
-      switch (key) {
+    for (const part of parts) {
+      const [, key, val] = part.match(/([^=]+)(?:=(.*))?/u);
+      switch (key.trim().toLowerCase()) {
         case 'httponly':
           this.httponly = true;
           break;
         case 'expires':
-          this.expires = value;
+          this.expires = val;
           break;
         case 'max-age':
-          this.maxage = parseInt(value, 10);
+          this.maxage = parseInt(val, 10);
           break;
         case 'path':
-          this.path = value.trim();
+          this.path = val.trim();
           this.pathSpecified = true;
           break;
         case 'domain':
-          // Ignore leading dot
-          value = value.trim();
-          value = value[0] === '.' ? value.substring(1, value.length) : value;
-          this.domain = value;
+          this.domain = val.trim().replace(/^\./u, '');
           this.domainSpecified = true;
           break;
         case 'secure':
           this.secure = true;
           break;
         case 'samesite':
-          value = value ? value.toLowerCase() : value;
-          if (value && ['none', 'lax', 'strict'].includes(value)) {
-            this.samesite = value;
-          } else {
-            throw new Error('Invalid samesite flag');
-          }
+          // value = value ? value.toLowerCase() : value;
+          // if (value && ['none', 'lax', 'strict'].includes(val.toLowerCase())) {
+          this.samesite = val.toLowerCase();
+          // } else {
+          //   throw new Error('Invalid samesite flag');
+          // }
           break;
         case 'partitioned':
           this.partitioned = true;
           break;
+        default:
+          throw new Error(`Unknown cookie flag ${key}`);
       }
     }
-
     // TODO split out into method
+
     this.session = typeof this.expires === 'undefined' && typeof this.maxage === 'undefined';
+    // console.log('ZZ here', this.session)
     // If both are set, maxage takes precedence
     if (typeof this.maxage !== 'undefined') {
       this.expirationTimestamp = Date.now() + this.maxage;
@@ -108,6 +92,7 @@ export class Cookie {
   }
 
   static unmarshal(object) {
+    // Ugly but the values will be overwritten below
     const cookie = new Cookie('a=a', 'https://127.0.0.1');
     cookie.name = object.name;
     cookie.value = object.value;

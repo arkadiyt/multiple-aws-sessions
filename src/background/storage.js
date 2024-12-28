@@ -77,9 +77,9 @@ export const removeTabId = async (tabId) => {
 export const getCookieJarFromRequestId = async (requestId) => {
   const key = `request_${requestId}`;
   const result = await chrome.storage.session.get(key);
-  const tabId = (result[key] || {}).tabId;
+  const { tabId } = result[key] || {};
   if (typeof tabId === 'undefined') {
-    throw new Error(`Undefined tabId for request ${requestId}`)
+    throw new Error(`Undefined tabId for request ${requestId}`);
   }
 
   return getCookieJarFromTabId(tabId);

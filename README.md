@@ -19,7 +19,6 @@ Engineers often have a need to sign into multiple AWS accounts (or even a single
 
 This extension removes this restriction, and allows you to be signed into as many accounts as you want in a single browser window.
 
-
 ### Installation
 
 #### Webstores
@@ -32,6 +31,7 @@ This extension removes this restriction, and allows you to be signed into as man
 #### From source
 
 1. Run these commands:
+
 ```
 git clone https://github.com/arkadiyt/multiple-aws-sessions
 cd multiple-aws-sessions

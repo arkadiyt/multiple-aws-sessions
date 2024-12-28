@@ -57,12 +57,10 @@ export class Cookie {
           this.secure = true;
           break;
         case 'samesite':
-          // value = value ? value.toLowerCase() : value;
-          // if (value && ['none', 'lax', 'strict'].includes(val.toLowerCase())) {
           this.samesite = val.toLowerCase();
-          // } else {
-          //   throw new Error('Invalid samesite flag');
-          // }
+          if (!['none', 'lax', 'strict'].includes(this.samesite)) {
+            throw new Error(`Invalid samesite flag ${this.samesite}`);
+          }
           break;
         case 'partitioned':
           this.partitioned = true;
@@ -74,13 +72,17 @@ export class Cookie {
     // TODO split out into method
 
     this.session = typeof this.expires === 'undefined' && typeof this.maxage === 'undefined';
-    // console.log('ZZ here', this.session)
     // If both are set, maxage takes precedence
     if (typeof this.maxage !== 'undefined') {
       this.expirationTimestamp = Date.now() + this.maxage;
     } else if (typeof this.expires !== 'undefined') {
       this.expirationTimestamp = Date.parse(this.expires);
     }
+
+    if (Number.isNaN(this.expirationTimestamp)) {
+      throw new Error('Invalid expires or max-age')
+    }
+
   }
 
   expired() {

@@ -28,7 +28,6 @@ describe('cookie', () => {
       ['a', 'b', { domain: 'sub.example.com', path: '/path/' }],
     ].forEach(([name, value, options]) => {
       const cookie = new Cookie(cs(name, value, options), 'https://example.com');
-      // console.error('XXX', cookie, options)
       expect(cookie.name).toBe(name);
       expect(cookie.value).toBe(value);
       expect(cookie.domain).toBe(
@@ -52,9 +51,12 @@ describe('cookie', () => {
 
   it('throws an error for malformed set-cookie headers', () => {
     expect.hasAssertions();
+
     [
-      // TODO add more once I rework the parsing to be my own
       ['asd', 'Invalid cookie header'],
+      ['', 'Invalid cookie header'],
+      ['a=1; max-age=a', 'Invalid expires or max-age'],
+      ['a=1; samesite=blah', 'Invalid samesite flag blah']
     ].forEach((testCase) => {
       expect(() => {
         new Cookie(testCase[0], 'https://example.com');

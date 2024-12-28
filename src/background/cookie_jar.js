@@ -96,7 +96,7 @@ export class CookieJar {
 
   matching({ domain, path, secure, samesite, httponly } = {}) {
     return this.getCookies().filter((cookie) => {
-      if (domain !== undefined) {
+      if (typeof domain !== 'undefined') {
         if (
           !(
             domain === cookie.domain ||
@@ -109,7 +109,7 @@ export class CookieJar {
         }
       }
 
-      if (path !== undefined) {
+      if (typeof path !== 'undefined') {
         // https://www.rfc-editor.org/rfc/rfc6265#section-5.1.4
         if (
           !(
@@ -123,13 +123,13 @@ export class CookieJar {
 
       // This handles the case where secure === false and cookie.secure === undefined
       // TODO consider giving defaults in Cookie (e.g. secure is false instead of undefined)
-      if (secure !== undefined) {
+      if (typeof secure !== 'undefined') {
         if (!((secure === true && cookie.secure === true) || (secure === false && cookie.secure !== true))) {
           return false;
         }
       }
 
-      if (samesite !== undefined) {
+      if (typeof samesite !== 'undefined') {
         if (samesite instanceof Array && !samesite.includes(cookie.samesite)) {
           return false;
         } else if (typeof samesite === 'string' && samesite !== cookie.samesite) {
@@ -139,7 +139,7 @@ export class CookieJar {
 
       // This handles the case where httpOnly === false and cookie.secure === undefined
       // TODO consider giving defaults in Cookie (e.g. secure is false instead of undefined)
-      if (httponly !== undefined) {
+      if (typeof httponly !== 'undefined') {
         if (!((httponly === true && cookie.httponly === true) || (httponly === false && cookie.httponly !== true))) {
           return false;
         }

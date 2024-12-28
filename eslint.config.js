@@ -26,6 +26,9 @@ export default [
     },
     plugins: { jest: pluginJest },
     ...pluginJest.configs['flat/all'],
+    rules: {
+      'jest/no-hooks': 'off',
+    },
   },
   {
     files: ['webpack.config.js'],
@@ -47,7 +50,10 @@ export default [
   eslintConfigPrettier,
   {
     rules: {
+      'max-lines-per-function': ['error', 100],
       'max-statements': ['error', 20],
+      'no-magic-numbers': 'off',
+      'no-ternary': 'off',
     },
   },
 ];

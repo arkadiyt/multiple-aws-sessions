@@ -29,20 +29,22 @@ describe('cookie', () => {
 
       expect(cookie.name).toBe(name);
       expect(cookie.value).toBe(value);
-      expect(cookie.domain).toBe(options.domain === undefined ? 'example.com' : options.domain.replace(/^\./v, ''));
-      expect(cookie.path).toBe(options.path === undefined ? '/' : options.path);
+      expect(cookie.domain).toBe(
+        typeof options.domain === 'undefined' ? 'example.com' : options.domain.replace(/^\./v, ''),
+      );
+      expect(cookie.path).toBe(typeof options.path === 'undefined' ? '/' : options.path);
       expect(cookie.expires).toBe(options.expires);
       expect(cookie.maxage).toBe(options.maxage);
       expect(cookie.secure).toBe(options.secure);
       expect(cookie.httponly).toBe(options.httponly);
       expect(cookie.samesite).toBe(options.samesite);
       expect(cookie.partitioned).toBe(options.partitioned);
-      expect(cookie.session).toBe(options.expires === undefined && options.maxage === undefined);
+      expect(cookie.session).toBe(typeof options.expires === 'undefined' && typeof options.maxage === 'undefined');
       expect(cookie.expirationTimestamp).toBe(
-        options.maxage ? Date.now() + options.maxage : options.expires ? Date.parse(options.expires) : undefined,
+        options.maxage ? Date.now() + options.maxage : options.expires ? Date.parse(options.expires) : void 0,
       );
-      expect(cookie.domainSpecified).toBe(options.domain !== undefined);
-      expect(cookie.pathSpecified).toBe(options.path !== undefined);
+      expect(cookie.domainSpecified).toBe(typeof options.domain !== 'undefined');
+      expect(cookie.pathSpecified).toBe(typeof options.path !== 'undefined');
     });
   });
 

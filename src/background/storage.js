@@ -2,7 +2,7 @@ import { CookieJar } from './cookie_jar.js';
 
 export const getNextRuleId = async () => {
   const { ruleId } = await chrome.storage.session.get('ruleId'),
-    result = ruleId === undefined ? 1 : ruleId;
+    result = typeof ruleId === 'undefined' ? 1 : ruleId;
   return result;
 };
 
@@ -27,7 +27,7 @@ export const getCookieJarFromRequestId = (requestId) =>
   new Promise(async (resolve, reject) => {
     const tabId = await getTabIdFromRequestId(requestId);
     // TODO should this move into getTabIdFromRequestId?
-    if (tabId === undefined) {
+    if (typeof tabId === 'undefined') {
       reject(`Tab not found for request ${requestId}`);
       return;
     }
@@ -41,7 +41,7 @@ export const getCookieJarFromTabId = (tabId) =>
     chrome.storage.session.get(tabKey, (tab) => {
       const { cookieJarId } = tab[tabKey] || {};
 
-      if (cookieJarId === undefined) {
+      if (typeof cookieJarId === 'undefined') {
         resolve([cookieJarId, [tabId], new CookieJar()]);
         return;
       }
@@ -55,7 +55,7 @@ export const getCookieJarFromTabId = (tabId) =>
   });
 
 export const saveCookieJar = async (cookieJarId, tabIds, cookieJar) => {
-  if (cookieJarId === undefined) {
+  if (typeof cookieJarId === 'undefined') {
     cookieJarId = crypto.randomUUID();
   }
 

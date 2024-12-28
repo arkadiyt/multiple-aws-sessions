@@ -34,7 +34,7 @@ export class Cookie {
     this.domain = url.hostname;
     this.pathSpecified = false;
     this.path =
-      url.pathname === undefined || url.pathname === '/' || !url.pathname.startsWith('/')
+      typeof url.pathname === 'undefined' || url.pathname === '/' || !url.pathname.startsWith('/')
         ? '/'
         : url.pathname.replace(/\/$/u, '');
 
@@ -90,11 +90,11 @@ export class Cookie {
     }
 
     // TODO split out into method
-    this.session = this.expires === undefined && this.maxage === undefined;
+    this.session = typeof this.expires === 'undefined' && typeof this.maxage === 'undefined';
     // If both are set, maxage takes precedence
-    if (this.maxage !== undefined) {
+    if (typeof this.maxage !== 'undefined') {
       this.expirationTimestamp = Date.now() + this.maxage;
-    } else if (this.expires !== undefined) {
+    } else if (typeof this.expires !== 'undefined') {
       this.expirationTimestamp = Date.parse(this.expires);
     }
   }

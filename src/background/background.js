@@ -1,6 +1,4 @@
 import { Cookie, cookieHeader } from './cookie.js';
-import { RESOURCE_TYPES } from './common.js';
-import { sessionRulesFromCookieJar } from './session_rules.js';
 import {
   getCookieJarFromRequestId,
   getCookieJarFromTabId,
@@ -9,6 +7,9 @@ import {
   saveRuleId,
   setTabIdForRequestId,
 } from './storage.js';
+import { RESOURCE_TYPES } from './common.js';
+import { sessionRulesFromCookieJar } from './session_rules.js';
+
 const INTERCEPT_URLS = ['*://*.aws.amazon.com/*'],
   /**
    * TODO
@@ -23,7 +24,7 @@ timers:
     const promises = [];
     for (const tabId of tabIds) {
       const tab = await chrome.tabs.get(tabId);
-      if (tab.url === undefined) {
+      if (typeof tab.url === 'undefined') {
         continue;
       }
 
@@ -47,7 +48,7 @@ timers:
 
 // If a new tab is opened from a tab we're hooking, make sure the new tab gets the same cookies as the existing tab
 chrome.tabs.onCreated.addListener(async (details) => {
-  if (details.openerTabId === undefined) {
+  if (typeof details.openerTabId === 'undefined') {
     return;
   }
 
@@ -152,7 +153,7 @@ chrome.webRequest.onHeadersReceived.addListener(
       return;
     }
 
-    if (sender.tab === undefined) {
+    if (typeof sender.tab === 'undefined') {
       return;
     }
 

@@ -37,7 +37,7 @@ const sendUpdatedCookiesToTabs = async (cookieJar, tabIds) => {
   const promises = tabIds.map((tabId) =>
     chrome.tabs.get(tabId).then((tab) => {
       if (typeof tab.url === 'undefined') {
-        return;
+        return void 0;
       }
 
       const tabUrl = new URL(tab.url);
@@ -121,7 +121,7 @@ chrome.webRequest.onHeadersReceived.addListener(
 
     const tabId = await getTabIdFromRequestId(details.requestId);
     if (typeof tabId === 'undefined') {
-      console.warn(`Received headers for request ${details.requestId} with no corresponding tabId`, err);
+      console.warn(`Received headers for request ${details.requestId} with no corresponding tabId`);
       return;
     }
     const [cookieJarId, tabIds, cookieJar] = await getCookieJarFromTabId(tabId);

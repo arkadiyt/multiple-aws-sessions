@@ -125,8 +125,8 @@ describe('cookiejar', () => {
       [{ domain: 'example.com', secure: false }, ['c']],
       [{ domain: 'example.com' }, ['c']],
       [{ domain: 'sub2.example.com' }, ['b', 'c']],
-      [{ samesite: 'lax' }, ['f']],
-      [{ samesite: ['lax', 'strict'] }, ['f', 'g']],
+      [{ samesite: 'lax' }, ['a', 'b', 'c', 'd', 'f', 'h', 'i', 'j']],
+      [{ samesite: ['lax', 'strict'] }, ['a', 'b', 'c', 'd', 'f', 'g', 'h', 'i', 'j']],
       [{ path: '/path2' }, ['a', 'b', 'c', 'd', 'e', 'f', 'g']],
       [{ path: '/path1test' }, []],
       [{ path: '/path1/test' }, ['h']],
@@ -151,6 +151,6 @@ describe('cookiejar', () => {
       'https://sub1.sub2.example.com/path2',
     );
 
-    expect(cookieJar).toEqual(CookieJar.unmarshal(JSON.parse(JSON.stringify(cookieJar))));
+    expect(cookieJar).toStrictEqual(CookieJar.unmarshal(JSON.parse(JSON.stringify(cookieJar))));
   });
 });

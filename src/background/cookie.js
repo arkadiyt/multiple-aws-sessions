@@ -7,31 +7,32 @@
 
 export class Cookie {
   constructor(cookieStr, requestUrl) {
-    this.parse2(cookieStr, requestUrl);
+    this.parse(cookieStr, requestUrl);
   }
 
-  parse2(cookieStr, requestUrl) {
-    const parts = cookieStr.split(';').filter((str) => str != '');
+  parse(cookieStr, requestUrl) {
+    const parts = cookieStr.split(';').filter((str) => str !== '');
     try {
       [, this.name, this.value] = parts.shift().match(/([^=]+)=(.*)/u);
     } catch {
       throw new Error('Invalid cookie header');
     }
     const url = new URL(requestUrl);
-    this.domainSpecified = false;
-    this.domain = url.hostname;
-    this.pathSpecified = false;
+
+    this.httponly = false;
+    this.expires = void 0;
+    this.maxage = void 0;
     this.path =
       typeof url.pathname === 'undefined' || url.pathname === '/' || !url.pathname.startsWith('/')
         ? '/'
         : url.pathname.replace(/\/$/u, '');
-    // this.httponly = false;
-    // this.expires = undefined;
-    // this.maxage = undefined;
-    // this.expirationTimestamp = undefined;
-    // this.secure = false;
-    // this.samesite = 'lax';
-    // this.partitioned = false;
+    this.pathSpecified = false;
+    this.domain = url.hostname;
+    this.domainSpecified = false;
+    this.secure = false;
+    this.samesite = 'lax';
+    this.partitioned = false;
+    this.expirationTimestamp = void 0;
 
     for (const part of parts) {
       const [, key, val] = part.match(/([^=]+)(?:=(.*))?/u);
@@ -69,9 +70,7 @@ export class Cookie {
           throw new Error(`Unknown cookie flag ${key}`);
       }
     }
-    // TODO split out into method
 
-    this.session = typeof this.expires === 'undefined' && typeof this.maxage === 'undefined';
     // If both are set, maxage takes precedence
     if (typeof this.maxage !== 'undefined') {
       this.expirationTimestamp = Date.now() + this.maxage;
@@ -80,13 +79,16 @@ export class Cookie {
     }
 
     if (Number.isNaN(this.expirationTimestamp)) {
-      throw new Error('Invalid expires or max-age')
+      throw new Error('Invalid expires or max-age');
     }
+  }
 
+  session() {
+    return typeof this.expires === 'undefined' && typeof this.maxage === 'undefined';
   }
 
   expired() {
-    return !this.session && this.expirationTimestamp <= Date.now();
+    return !this.session() && this.expirationTimestamp <= Date.now();
   }
 
   toString() {
@@ -108,7 +110,6 @@ export class Cookie {
     cookie.secure = object.secure;
     cookie.samesite = object.samesite;
     cookie.partitioned = object.partitioned;
-    cookie.session = object.session;
     cookie.expirationTimestamp = object.expirationTimestamp;
     return cookie;
   }

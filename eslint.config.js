@@ -32,6 +32,8 @@ export default [
   {
     files: ['test/**/*'],
     rules: {
+      'jest/max-expects': 'off',
+      'jest/no-conditional-in-test': 'off',
       'jest/no-hooks': 'off',
     },
   },
@@ -70,6 +72,7 @@ export default [
       'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
       'no-void': 'off',
       'one-var': ['error', 'never'],
+      'prefer-named-capture-group': 'off',
     },
   },
 ];

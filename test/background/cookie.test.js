@@ -28,6 +28,7 @@ describe('cookie', () => {
       ['a', 'b', { domain: 'sub.example.com', path: '/path/' }],
     ].forEach(([name, value, options]) => {
       const cookie = new Cookie(cs(name, value, options), 'https://example.com');
+
       expect(cookie.name).toBe(name);
       expect(cookie.value).toBe(value);
       expect(cookie.domain).toBe(
@@ -36,16 +37,32 @@ describe('cookie', () => {
       expect(cookie.path).toBe(typeof options.path === 'undefined' ? '/' : options.path);
       expect(cookie.expires).toBe(options.expires);
       expect(cookie.maxage).toBe(options.maxage);
-      expect(cookie.secure).toBe(options.secure);
-      expect(cookie.httponly).toBe(options.httponly);
-      expect(cookie.samesite).toBe(options.samesite);
-      expect(cookie.partitioned).toBe(options.partitioned);
-      expect(cookie.session).toBe(typeof options.expires === 'undefined' && typeof options.maxage === 'undefined');
+      expect(cookie.secure).toBe(typeof options.secure === 'undefined' ? false : options.secure);
+      expect(cookie.httponly).toBe(typeof options.httponly === 'undefined' ? false : options.httponly);
+      expect(cookie.samesite).toBe(typeof options.samesite === 'undefined' ? 'lax' : options.samesite);
+      expect(cookie.partitioned).toBe(typeof options.partitioned === 'undefined' ? false : options.partitioned);
       expect(cookie.expirationTimestamp).toBe(
+        // eslint-disable-next-line no-nested-ternary
         options.maxage ? Date.now() + options.maxage : options.expires ? Date.parse(options.expires) : void 0,
       );
       expect(cookie.domainSpecified).toBe(typeof options.domain !== 'undefined');
       expect(cookie.pathSpecified).toBe(typeof options.path !== 'undefined');
+    });
+  });
+
+  it('treats session cookies correctly', () => {
+    expect.hasAssertions();
+
+    [
+      ['a', 'b', {}, true],
+      ['a', 'b', { httponly: true }, true],
+      ['a', 'b', { maxage: 1 }, false],
+      ['a', 'b', { expires: 'Tue, 29 Oct 2024 16:56:32 GMT' }, false],
+      ['a', 'b', { expires: 'Tue, 29 Oct 2024 16:56:32 GMT', maxage: 1 }, false],
+    ].forEach(([name, value, options, expected]) => {
+      const cookie = new Cookie(cs(name, value, options), 'https://example.com');
+
+      expect(cookie.session()).toBe(expected);
     });
   });
 
@@ -56,9 +73,11 @@ describe('cookie', () => {
       ['asd', 'Invalid cookie header'],
       ['', 'Invalid cookie header'],
       ['a=1; max-age=a', 'Invalid expires or max-age'],
-      ['a=1; samesite=blah', 'Invalid samesite flag blah']
+      ['a=1; samesite=blah', 'Invalid samesite flag blah'],
+      ['a=1;asd', 'Unknown cookie flag asd'],
     ].forEach((testCase) => {
       expect(() => {
+        // eslint-disable-next-line no-new
         new Cookie(testCase[0], 'https://example.com');
       }).toThrow(testCase[1]);
     });
@@ -117,7 +136,7 @@ describe('cookie', () => {
     ].forEach(([name, value, options]) => {
       const cookie = new Cookie(cs(name, value, options), 'https://example.com');
 
-      expect(cookie).toEqual(Cookie.unmarshal(JSON.parse(JSON.stringify(cookie))));
+      expect(cookie).toStrictEqual(Cookie.unmarshal(JSON.parse(JSON.stringify(cookie))));
     });
   });
 });

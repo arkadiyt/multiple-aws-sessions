@@ -1,8 +1,8 @@
 import { Cookie } from 'background/cookie.js';
 import psl from 'psl';
 
-// Function domainMatchesCookieDomain(cookie, domain) {
-//   // TODO, DRY up the code below
+// TODO, DRY up the code below
+// function domainMatchesCookieDomain(cookie, domain) {
 // }
 
 export class CookieJar {
@@ -54,7 +54,11 @@ export class CookieJar {
       return;
     }
 
-    // No additional checks to perform here for cookies with the Partitioned, httpOnly, SameSite, or Path flags (TODO is this correct?)
+    // TODO is this correct?
+    // httpOnly needs to be only set via server requests, not javascript
+    // path can only be set arbitrarily for server requests, javascript must be on that path
+    // samesite, partitioned seem ok?
+    // No additional checks to perform here for cookies with the Partitioned, httpOnly, SameSite, or Path flags
 
     // Matching rules described on step 11 here: https://www.rfc-editor.org/rfc/rfc6265#section-5.3
     const index = this.cookies.findIndex(
@@ -121,12 +125,8 @@ export class CookieJar {
         }
       }
 
-      // This handles the case where secure === false and cookie.secure === undefined
-      // TODO consider giving defaults in Cookie (e.g. secure is false instead of undefined)
-      if (typeof secure !== 'undefined') {
-        if (!((secure === true && cookie.secure === true) || (secure === false && cookie.secure !== true))) {
-          return false;
-        }
+      if (typeof secure !== 'undefined' && secure !== cookie.secure) {
+        return false;
       }
 
       if (typeof samesite !== 'undefined') {
@@ -137,12 +137,8 @@ export class CookieJar {
         }
       }
 
-      // This handles the case where httpOnly === false and cookie.secure === undefined
-      // TODO consider giving defaults in Cookie (e.g. secure is false instead of undefined)
-      if (typeof httponly !== 'undefined') {
-        if (!((httponly === true && cookie.httponly === true) || (httponly === false && cookie.httponly !== true))) {
-          return false;
-        }
+      if (typeof httponly !== 'undefined' && httponly !== cookie.httponly) {
+        return false;
       }
 
       return true;

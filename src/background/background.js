@@ -2,7 +2,7 @@ import { CMD_INJECT_COOKIES, CMD_LOADED, CMD_PARSE_NEW_COOKIE } from 'shared.js'
 import { Cookie, cookieHeader } from 'background/cookie.js';
 import {
   clearOldRequestKeys,
-  getCookieJarFromRequestId,
+  getTabIdFromRequestId,
   getCookieJarFromTabId,
   getNextRuleId,
   removeTabId,
@@ -17,6 +17,8 @@ const INTERCEPT_URLS = ['*://*.aws.amazon.com/*'];
 
 (async () => {
   const ALARM_NAME = 'reaper';
+  const EXPIRE_AFTER = 60000;
+
   const alarm = await chrome.alarms.get(ALARM_NAME);
   if (!alarm) {
     chrome.alarms.create(ALARM_NAME, { periodInMinutes: 1 });
@@ -27,7 +29,7 @@ const INTERCEPT_URLS = ['*://*.aws.amazon.com/*'];
       return;
     }
 
-    clearOldRequestKeys(60000);
+    clearOldRequestKeys(EXPIRE_AFTER);
   });
 })();
 
@@ -62,13 +64,15 @@ const updateSessionRules = async (cookieJar, tabIds) => {
     .map((rule) => rule.id);
   const ruleIdStart = await getNextRuleId();
   const rules = sessionRulesFromCookieJar(cookieJar, tabIds, ruleIdStart);
-  /*Await*/ chrome.declarativeNetRequest.updateSessionRules({
-    addRules: rules,
-    removeRuleIds: ruleIds,
-  });
-  await saveRuleId(ruleIdStart + rules.length);
 
-  sendUpdatedCookiesToTabs(cookieJar, tabIds);
+  return Promise.allSettled([
+    chrome.declarativeNetRequest.updateSessionRules({
+      addRules: rules,
+      removeRuleIds: ruleIds,
+    }),
+    saveRuleId(ruleIdStart + rules.length),
+    sendUpdatedCookiesToTabs(cookieJar, tabIds),
+  ]);
 };
 
 // If a new tab is opened from a tab we're hooking, make sure the new tab gets the same cookies as the existing tab
@@ -115,19 +119,17 @@ chrome.webRequest.onHeadersReceived.addListener(
       return;
     }
 
-    let cookieJar;
-    let cookieJarId;
-    let tabIds;
-    try {
-      [cookieJarId, tabIds, cookieJar] = await getCookieJarFromRequestId(details.requestId);
-    } catch (err) {
-      console.warn(err);
+    const tabId = await getTabIdFromRequestId(details.requestId);
+    if (typeof tabId === 'undefined') {
+      console.warn(`Received headers for request ${details.requestId} with no corresponding tabId`, err);
       return;
     }
+    const [cookieJarId, tabIds, cookieJar] = await getCookieJarFromTabId(tabId);
+
     // TODO is this valid if there is a redirect? Is the cookie supposed to be set on the requested domain or the redirected domain?
     cookieJar.upsertCookies(cookies, details.url);
-    /*Await*/ saveCookieJar(cookieJarId, tabIds, cookieJar);
-    /*Await*/ updateSessionRules(cookieJar, tabIds);
+    saveCookieJar(cookieJarId, tabIds, cookieJar);
+    updateSessionRules(cookieJar, tabIds);
   },
   {
     types: RESOURCE_TYPES,

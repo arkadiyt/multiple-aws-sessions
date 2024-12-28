@@ -74,13 +74,17 @@ export const removeTabId = async (tabId) => {
   return Promise.allSettled(promises);
 };
 
-export const getCookieJarFromRequestId = async (requestId) => {
+export const getTabIdFromRequestId = async (requestId) => {
   const key = `request_${requestId}`;
   const result = await chrome.storage.session.get(key);
   const { tabId } = result[key] || {};
-  if (typeof tabId === 'undefined') {
-    throw new Error(`Undefined tabId for request ${requestId}`);
-  }
-
-  return getCookieJarFromTabId(tabId);
+  return tabId;
 };
+
+// export const getCookieJarFromRequestId = async (requestId) => {
+//   if (typeof tabId === 'undefined') {
+//     throw new Error(`Undefined tabId for request ${requestId}`);
+//   }
+
+//   return getCookieJarFromTabId(tabId);
+// };

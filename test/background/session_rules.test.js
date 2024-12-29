@@ -29,7 +29,7 @@ describe('regexpForCookieAttributes', () => {
       ],
       // TODO path tests, other tests
     ].forEach(([options, shouldMatch, shouldNotMatch]) => {
-      const regexp = regexpForCookieAttributes(options);
+      const regexp = new RegExp(regexpForCookieAttributes(options), 'u');
       shouldMatch.forEach((candidate) => {
         expect(regexp.test(candidate)).toBe(true);
       });

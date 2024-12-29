@@ -18,7 +18,7 @@ This extension removes this restriction, and allows you to transparently sign in
 
 #### From webstores:
 
-- [Chrome]()
+- [Chrome](https://chromewebstore.google.com/detail/multiple-aws-sessions/ehffbdpahpebdgpmnecccpfmbokeohop)
 - [Firefox]()
 - [Edge]()
 - [Opera]()

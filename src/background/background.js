@@ -91,7 +91,6 @@ chrome.tabs.onCreated.addListener(async (details) => {
   updateSessionRules(cookieJar, tabIds);
 });
 
-// TODO also need to update session rules here (remove from old tabs)
 chrome.tabs.onRemoved.addListener(removeTabId);
 
 // Keep track of what tabs are initiating which requests
@@ -110,7 +109,6 @@ chrome.webRequest.onHeadersReceived.addListener(
     const cookies = [];
     for (const header of details.responseHeaders) {
       if (header.name === 'set-cookie') {
-        // TODO is this valid if there is a redirect? Is the cookie supposed to be set on the requested domain or the redirected domain?
         cookies.push(new Cookie(header.value, details.url));
       }
     }
@@ -125,8 +123,6 @@ chrome.webRequest.onHeadersReceived.addListener(
       return;
     }
     const [cookieJarId, tabIds, cookieJar] = await getCookieJarFromTabId(tabId);
-
-    // TODO is this valid if there is a redirect? Is the cookie supposed to be set on the requested domain or the redirected domain?
     cookieJar.upsertCookies(cookies, details.url, false);
     saveCookieJar(cookieJarId, tabIds, cookieJar);
     updateSessionRules(cookieJar, tabIds);

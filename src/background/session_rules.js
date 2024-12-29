@@ -62,7 +62,7 @@ const regexpForCookieAttributes = (json) => {
   const anchorRegex = json.domainSpecified ? '((?:[a-z0-9-]*\\.)*)?' : '';
   const domainRegex = escapeStringRegexp(json.domain);
   const pathRegex = `${escapeStringRegexp(json.path)}.*`; // TODO needs to handle cases where a trailing slash is needed here
-  return new RegExp(`^${schemeRegex}${anchorRegex}${domainRegex}${pathRegex}$`, 'u');
+  return `^${schemeRegex}${anchorRegex}${domainRegex}${pathRegex}$`;
 };
 
 export const sessionRulesFromCookieJar = (cookieJar, tabIds, ruleIdStart) => {

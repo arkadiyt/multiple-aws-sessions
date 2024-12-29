@@ -27,7 +27,6 @@ jobs:
           Auto formatted alerts by GitHub
           EOF
           git push
-          # exit 1 # TODO: exit if there was a push, don't waste cycles
       - name: Run tests
         run: make test
       - name: Lint

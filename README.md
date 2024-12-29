@@ -40,7 +40,7 @@ npx webpack
 
 ### How it works
 
-See this blog post: #TODO
+See this blog post:
 
 ### Permissions
 

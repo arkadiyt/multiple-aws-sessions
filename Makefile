@@ -1,4 +1,4 @@
-.PHONY: test lint lintfix fmt webpack clean buildchrome
+.PHONY: test lint lintfix fmt webpack clean build
 
 clean:
 	rm -rf dist/* build/*
@@ -18,5 +18,5 @@ lintfix:
 fmt:
 	npx prettier . --write
 
-buildchrome:
+build:
 	./script/build.sh

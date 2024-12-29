@@ -5,7 +5,7 @@ import pluginJs from '@eslint/js';
 
 export default [
   {
-    ignores: ['dist/*'],
+    ignores: ['dist/', 'build/'],
   },
   {
     files: ['src/**/*'],

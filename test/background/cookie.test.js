@@ -50,7 +50,17 @@ describe('cookie', () => {
     });
   });
 
-  // TODO add tests for path handling default cases for headers and javascript
+  it('has a correct default path', () => {
+    expect.hasAssertions();
+
+    const httpCookie = new Cookie(cs('a', 'b', {}), 'https://example.com/path', false);
+
+    expect(httpCookie.path).toBe('/path');
+
+    const javascriptCookie = new Cookie(cs('a', 'b', {}), 'https://example.com/path', true);
+
+    expect(javascriptCookie.path).toBe('/');
+  });
 
   it('treats session cookies correctly', () => {
     expect.hasAssertions();
@@ -76,7 +86,6 @@ describe('cookie', () => {
       ['', 'Invalid cookie header'],
       ['a=1; max-age=a', 'Invalid expires or max-age'],
       ['a=1; samesite=blah', 'Invalid samesite flag blah'],
-      ['a=1;asd', 'Unknown cookie flag asd'],
     ].forEach((testCase) => {
       expect(() => {
         // eslint-disable-next-line no-new

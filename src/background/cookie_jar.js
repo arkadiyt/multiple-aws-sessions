@@ -56,13 +56,13 @@ export class CookieJar {
       return;
     }
 
-    // Cookies set from javascript can't be httpOnly cookies
     if (fromJavascript === true && cookie.httponly !== false) {
+      // Cookies set from javascript can't be httpOnly cookies
       return;
     }
 
-    // Cookies set from javascript must be for their own path or a prefix of it, only server-set cookies can have arbitrary paths
     if (fromJavascript === true && !pathMatch(cookie, url.pathname)) {
+      // Cookies set from javascript must be for their own path or a prefix of it, only server-set cookies can have arbitrary paths
       return;
     }
 

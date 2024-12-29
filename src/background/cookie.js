@@ -53,7 +53,8 @@ export class Cookie {
           this.partitioned = true;
           break;
         default:
-          throw new Error(`Unknown cookie flag '${key}' in cookie string '${cookieStr}'`);
+          // Silently ignore unknown flags
+          console.warn(`Unknown cookie flag '${key}' in cookie string '${cookieStr}'`);
       }
     }
 

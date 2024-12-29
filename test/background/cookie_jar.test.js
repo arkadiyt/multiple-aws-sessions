@@ -31,9 +31,9 @@ describe('cookiejar', () => {
       [cs('__Host-a', 'b', { path: '/path', secure: true }), 'https://example.com'],
       [cs('__Host-a', 'b', { domain: 'example.com', path: '/', secure: true }), 'https://example.com'],
       [cs('__Host-a', 'b', { domain: 'example.com', secure: true }), 'https://example.com'],
-    ].forEach((testCase) => {
+    ].forEach(([cookie, requestUrl]) => {
       const cookieJar = new CookieJar();
-      cookieJar.upsertCookie(testCase[0], testCase[1]);
+      cookieJar.upsertCookie(cookie, requestUrl);
 
       expect(cookieJar.getCookies()).toHaveLength(0);
     });
@@ -50,14 +50,14 @@ describe('cookiejar', () => {
       [cs('a', 'b', { path: '/' }), 'http://example.com/item/', '/'],
       [cs('a', 'b', { path: '/item' }), 'http://example.com/item/', '/item'],
       [cs('a', 'b', { path: '/item/' }), 'http://example.com/item/', '/item/'],
-    ].forEach((testCase) => {
+    ].forEach(([cookie, requestUrl, expectedPath]) => {
       const cookieJar = new CookieJar();
-      cookieJar.upsertCookie(new Cookie(testCase[0], testCase[1], true), testCase[1], true);
+      cookieJar.upsertCookie(new Cookie(cookie, requestUrl, true), requestUrl, true);
 
       const cookies = cookieJar.getCookies();
 
       expect(cookies).toHaveLength(1);
-      expect(cookies[0].path).toBe(testCase[2]);
+      expect(cookies[0].path).toBe(expectedPath);
     });
   });
 
@@ -71,9 +71,9 @@ describe('cookiejar', () => {
       [cs('a', 'b', { path: '/asd' }), 'http://example.com'],
       [cs('a', 'b', { path: '/ite' }), 'http://example.com/item/'],
       [cs('a', 'b', { path: '/item/asd' }), 'http://example.com/item/'],
-    ].forEach((testCase) => {
+    ].forEach(([cookie, requestUrl]) => {
       const cookieJar = new CookieJar();
-      cookieJar.upsertCookie(new Cookie(testCase[0], testCase[1], true), testCase[1], true);
+      cookieJar.upsertCookie(new Cookie(cookie, requestUrl, true), requestUrl, true);
 
       expect(cookieJar.getCookies()).toHaveLength(0);
     });
@@ -163,20 +163,20 @@ describe('cookiejar', () => {
     );
 
     [
-      // [{ secure: true }, ['d']],
-      // [{ domain: 'example.com', secure: false }, ['c']],
-      // [{ domain: 'example.com' }, ['c']],
-      // [{ domain: 'sub2.example.com' }, ['b', 'c']],
-      // [{ samesite: 'lax' }, ['a', 'b', 'c', 'd', 'f', 'h', 'i', 'j']],
-      // [{ samesite: ['lax', 'strict'] }, ['a', 'b', 'c', 'd', 'f', 'g', 'h', 'i', 'j']],
-      // [{ path: '/path2' }, ['a', 'b', 'c', 'd', 'e', 'f', 'g']],
+      [{ secure: true }, ['d']],
+      [{ domain: 'example.com', secure: false }, ['c']],
+      [{ domain: 'example.com' }, ['c']],
+      [{ domain: 'sub2.example.com' }, ['b', 'c']],
+      [{ samesite: 'lax' }, ['a', 'b', 'c', 'd', 'f', 'h', 'i', 'j']],
+      [{ samesite: ['lax', 'strict'] }, ['a', 'b', 'c', 'd', 'f', 'g', 'h', 'i', 'j']],
+      [{ path: '/path2' }, ['a', 'b', 'c', 'd', 'e', 'f', 'g']],
       [{ path: '/path1test' }, []],
-      // [{ path: '/path1/test' }, ['h']],
-      // [{ path: '/path3/asd' }, ['i']],
-      // [{ domain: 'sub2.example.com', httponly: false }, ['b', 'c']],
-      // [{ httponly: true }, ['j']],
-      // [{ domain: 'com' }, []],
-      // [{ domain: '.com' }, []],
+      [{ path: '/path1/test' }, ['h']],
+      [{ path: '/path3/asd' }, ['i']],
+      [{ domain: 'sub2.example.com', httponly: false }, ['b', 'c']],
+      [{ httponly: true }, ['j']],
+      [{ domain: 'com' }, []],
+      [{ domain: '.com' }, []],
     ].forEach(([conditions, expected]) => {
       const all = cookieJar.getCookies();
       const matched = cookieJar.matching(conditions);

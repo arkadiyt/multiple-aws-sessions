@@ -86,11 +86,11 @@ describe('cookie', () => {
       ['', 'Invalid cookie header'],
       ['a=1; max-age=a', 'Invalid expires or max-age'],
       ['a=1; samesite=blah', 'Invalid samesite flag blah'],
-    ].forEach((testCase) => {
+    ].forEach(([cookie, expectedError]) => {
       expect(() => {
         // eslint-disable-next-line no-new
-        new Cookie(testCase[0], 'https://example.com');
-      }).toThrow(testCase[1]);
+        new Cookie(cookie, 'https://example.com');
+      }).toThrow(expectedError);
     });
   });
 
@@ -103,8 +103,8 @@ describe('cookie', () => {
       { maxage: 0 },
       { maxage: -1 },
       { maxage: -99999 },
-    ].forEach((testCase) => {
-      const cookie = new Cookie(cs('a', 'b', testCase), 'https://example.com');
+    ].forEach((cookieOptions) => {
+      const cookie = new Cookie(cs('a', 'b', cookieOptions), 'https://example.com');
 
       expect(cookie.expired()).toBe(true);
     });
@@ -114,8 +114,8 @@ describe('cookie', () => {
     expect.hasAssertions();
 
     [{ expires: new Date(Date.now() + 1000).toUTCString() }, { maxage: 1 }, { maxage: 99999 }, {}].forEach(
-      (testCase) => {
-        const cookie = new Cookie(cs('a', 'b', testCase), 'https://example.com');
+      (cookieOptions) => {
+        const cookie = new Cookie(cs('a', 'b', cookieOptions), 'https://example.com');
 
         expect(cookie.expired()).toBe(false);
       },

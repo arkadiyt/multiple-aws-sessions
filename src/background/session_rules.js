@@ -1,5 +1,6 @@
 import { RESOURCE_TYPES } from 'background/common.js';
 import { cookieHeader } from 'background/cookie.js';
+import escapeStringRegexp from 'escape-string-regexp';
 
 const sorted = (groups) =>
   groups.sort((key1, key2) => {
@@ -56,6 +57,14 @@ const sorted = (groups) =>
     return 0;
   });
 
+const regexpForCookieAttributes = (json) => {
+  const schemeRegex = json.secure ? 'https://' : 'https?://';
+  const anchorRegex = json.domainSpecified ? '((?:[a-z0-9-]*\\.)*)?' : '';
+  const domainRegex = escapeStringRegexp(json.domain);
+  const pathRegex = `${escapeStringRegexp(json.path)}.*`; // TODO needs to handle cases where a trailing slash is needed here
+  return new RegExp(`^${schemeRegex}${anchorRegex}${domainRegex}${pathRegex}$`, 'u');
+};
+
 export const sessionRulesFromCookieJar = (cookieJar, tabIds, ruleIdStart) => {
   const cookies = cookieJar.getCookies();
   const grouped = Object.groupBy(cookies, (cookie) =>
@@ -72,9 +81,6 @@ export const sessionRulesFromCookieJar = (cookieJar, tabIds, ruleIdStart) => {
   return sortedGroups.map((sortedGroup, index) => {
     const json = JSON.parse(sortedGroup);
     const matchingCookies = cookieJar.matching(json);
-    const scheme = json.secure ? 'https' : '*';
-    const anchor = json.domainSpecified ? '*' : '';
-    const path = json.path.slice(-1) === '/' ? json.path : `${json.path}/`;
     const rule = {
       action: {
         requestHeaders: [
@@ -87,11 +93,9 @@ export const sessionRulesFromCookieJar = (cookieJar, tabIds, ruleIdStart) => {
         type: 'modifyHeaders',
       },
       condition: {
+        regexFilter: regexpForCookieAttributes(json),
         resourceTypes: RESOURCE_TYPES,
         tabIds,
-        // TODO injection from set-cookie header domain/path/etc value?
-        // TODO switch to regex filter for more precise control, e.g. should match aws.amazon.com and its subdomains but *aws.amazon.com matches blahaws.amazon.com
-        urlFilter: `|${scheme}://${anchor}${json.domain}${path}*`,
       },
       id: ruleIdStart + index,
       priority: index + 1,
@@ -107,5 +111,6 @@ export const sessionRulesFromCookieJar = (cookieJar, tabIds, ruleIdStart) => {
 };
 
 export const exportedForTestingOnly = {
+  regexpForCookieAttributes,
   sorted,
 };

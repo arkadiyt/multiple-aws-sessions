@@ -4,8 +4,7 @@ import psl from 'psl';
 const pathMatch = (cookie, path) =>
   // https://www.rfc-editor.org/rfc/rfc6265#section-5.1.4
   cookie.path === path ||
-  (path.startsWith(cookie.path) && cookie.path.slice(-1) === '/') ||
-  path[cookie.path.length] === '/';
+  (path.startsWith(cookie.path) && (cookie.path.slice(-1) === '/' || path[cookie.path.length] === '/'));
 
 export class CookieJar {
   constructor() {

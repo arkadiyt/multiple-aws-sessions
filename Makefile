@@ -19,4 +19,4 @@ fmt:
 	npx prettier . --write
 
 build:
-	./script/build.sh
+	./scripts/build.sh

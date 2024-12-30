@@ -10,12 +10,18 @@ import {
   saveRuleId,
   setTabIdForRequestId,
 } from 'background/storage.js';
+import { onHeadersReceivedOptions, supportsListingSessionStorageKeys } from 'background/browser.js';
 import { RESOURCE_TYPES } from 'background/common.js';
 import { sessionRulesFromCookieJar } from 'background/session_rules.js';
 
 const INTERCEPT_URLS = ['*://*.aws.amazon.com/*'];
 
 (async () => {
+  // TODO support for firefox/others
+  if (supportsListingSessionStorageKeys === false) {
+    return;
+  }
+
   const ALARM_NAME = 'reaper';
   const EXPIRE_AFTER = 60000;
 
@@ -131,7 +137,7 @@ chrome.webRequest.onHeadersReceived.addListener(
     types: RESOURCE_TYPES,
     urls: INTERCEPT_URLS,
   },
-  ['responseHeaders', 'extraHeaders'],
+  onHeadersReceivedOptions,
 );
 
 /**

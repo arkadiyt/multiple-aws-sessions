@@ -5,7 +5,13 @@
   "default_locale": "en_US",
   "permissions": ["alarms", "declarativeNetRequest", "storage", "webRequest"],
   "background": {
+    <% if (target === 'chrome') { %>
     "service_worker": "dist/background.js"
+    <% } else if (target === 'firefox') { %>
+    "scripts": ["dist/background.js"]
+    <% } else { %>
+    <% throw new Error(`Unknown target '${target}'`) %>
+    <% } %>
   },
   "content_scripts": [
     {
@@ -24,5 +30,12 @@
     }
   ],
   "host_permissions": ["*://*.aws.amazon.com/*"],
+  <% if (target === 'firefox') { %>
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "{3168b424-1871-4b5a-977a-b1f15261c2a5}"
+    }
+  },
+  <% } %>
   "manifest_version": 3
 }

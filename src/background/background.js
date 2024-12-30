@@ -19,6 +19,7 @@ const INTERCEPT_URLS = ['*://*.aws.amazon.com/*'];
 (async () => {
   // TODO support for firefox/others
   if (supportsListingSessionStorageKeys === false) {
+    console.warn('Listing storage keys is not supported, old storage will not be reaped');
     return;
   }
 
@@ -115,7 +116,11 @@ chrome.webRequest.onHeadersReceived.addListener(
     const cookies = [];
     for (const header of details.responseHeaders) {
       if (header.name === 'set-cookie') {
-        cookies.push(new Cookie(header.value, details.url));
+        // In Chrome every set-cookie header is a separate array entry in details.responseHeaders
+        // In Firefox there is a single set-cookie header, with all values joined together with newlines
+        for (const cookieHeaderValue of header.value.split('\n')) {
+          cookies.push(new Cookie(cookieHeaderValue, details.url));
+        }
       }
     }
 

@@ -6,8 +6,8 @@
  * In Chrome when calling chrome.webRequest.onHeadersReceived.addListener, the last option specifies whether or not response
  * headers should be included. In Firefox and others just specifying "responseHeaders" is sufficient. For Chrome it used to be,
  * but starting in Chrome 72 you need to specify "extraHeaders" to receive the Cookie header and some other sensitive headers.
- * Specifying this option unconditionally causes an error in Firefox, so the value below contains the right options to include
- * depending on whether the current browser needs it or not.
+ * Specifying this option causes an error in Firefox, so the value below contains the right options to include depending on
+ * whether the current browser needs it or not.
  */
 export const onHeadersReceivedOptions = [
   'responseHeaders',

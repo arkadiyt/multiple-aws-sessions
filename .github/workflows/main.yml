@@ -22,12 +22,16 @@ jobs:
           git config user.name "${{ github.actor }}"
           git config user.email "${{ github.actor }}@users.noreply.github.com"
           git add .
-          git status
           cat <<EOF | git commit -F - || true
           Auto formatted alerts by GitHub
           EOF
           git push
-      - name: Run tests
+      - name: Test
         run: make test
       - name: Lint
         run: make lint
+      - name: Shellcheck
+        run: |
+          set -xe
+          shellcheck --version
+          shellcheck scripts/*

@@ -20,7 +20,13 @@ describe('regexpForCookieAttributes', () => {
       [
         { domain: 'a.example.com', domainSpecified: true, path: '/', secure: true },
         ['https://a.example.com/', 'https://b.a.example.com/path'],
-        ['https://example.com/', 'https://com/', 'https://aa.example.com', 'https://test.com/#https://a.example.com/'],
+        [
+          'https://example.com/',
+          'https://com/',
+          'https://aa.example.com',
+          'https://test.com/#https://a.example.com/',
+          'https://axexample.com/',
+        ],
       ],
       [
         { domain: 'a.example.com', domainSpecified: false, path: '/', secure: true },

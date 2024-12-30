@@ -17,7 +17,6 @@ import { sessionRulesFromCookieJar } from 'background/session_rules.js';
 const INTERCEPT_URLS = ['*://*.aws.amazon.com/*'];
 
 (async () => {
-  // TODO support for firefox/others
   if (supportsListingSessionStorageKeys === false) {
     console.warn('Listing storage keys is not supported, old storage will not be reaped');
     return;

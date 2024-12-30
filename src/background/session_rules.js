@@ -4,53 +4,41 @@ import escapeStringRegexp from 'escape-string-regexp';
 
 const sorted = (groups) =>
   groups.sort((key1, key2) => {
-    // -1 means key1 comes before key2
-    // 0 means equal
-    // 1 means key1 comes after key2
     const json1 = JSON.parse(key1);
     const json2 = JSON.parse(key2);
 
-    // Secure, no domain specified, descending by path, if there are 2 equal paths then by samesite
-    // https://sub.specific.domain
+    // Sorts json cookie attributes in the order to be applied. Top of the list is _lower_ priority and
+    // bottom of the list is _higher_ priority. E.g.:
+    // [
+    //   'rule1', <-- applied last
+    //   'rule2',
+    //   'rule3', <-- applied first
+    // ]
 
-    // https://specific.domain/path1/path2 (no domainSpecified) (samesite = true)
-    // https://specific.domain/path1/path2 (no domainSpecified)  (no samesite)
-    // https://specific.domain/ (no domainSpecified)
-
-    // No secure, no domain specified, descending by path
-    // *://specific.domain/path1/path2 (no domainSpecified)
-    // *://specific.domain/ (no domainSpecified)
-
-    // Secure, domain specified, descending by path
-    // https://*.domain/path1/path2 (domain specified)
-    // https://*.domain/ (domain specified)
-
-    // No secure, domain specified, descending by path
-    // *://*.domain/path1/path2 (domain specified)
-    // *://*.domain/ (domain specified)
-
-    // First go through all specific domains; wildcards go last
+    // First go through all specific domains (wildcards go last)
     if (json1.domainSpecified !== json2.domainSpecified) {
       return json1.domainSpecified ? -1 : 1;
     }
 
-    // When both or neither cookie had the domain explicitly set
-    // Choose the one with more parts (the more specific one) to go first, or if they have equal length
-    // Then choose based on lexigraphic comparison
+    // If they're both or neither wildcards, choose the domain with more parts first
     if (json1.domain !== json2.domain) {
       return json1.domain.split('.').length - json2.domain.split('.').length;
     }
 
+    // If the domains are the same, choose the one with `secure` first
     if (json1.secure !== json2.secure) {
       return json1.secure ? 1 : -1;
     }
 
-    // TODO need to handle cases like /path1 and /path1/
+    // If both or neither have `secure`, choose the path with more parts first
     if (json1.path !== json2.path) {
-      return json1.domain.split('/').length - json2.domain.split('/').length;
+      // TODO need to handle cases like /path1 and /path1/
+      return json1.path.split('/').length - json2.path.split('/').length;
     }
 
+    // If the paths are the same, choose the one with `samesite` first
     if (json1.samesite !== json2.samesite) {
+      // TODO need to handle lax, strict?
       return json1.samesite ? 1 : -1;
     }
 
@@ -59,10 +47,11 @@ const sorted = (groups) =>
 
 const regexpForCookieAttributes = (json) => {
   const schemeRegex = json.secure ? 'https://' : 'https?://';
-  const anchorRegex = json.domainSpecified ? '((?:[a-z0-9-]*\\.)*)?' : '';
+  const subdomainRegex = json.domainSpecified ? '(?:(?:[a-z0-9-]*\\.)*)?' : '';
   const domainRegex = escapeStringRegexp(json.domain);
-  const pathRegex = `${escapeStringRegexp(json.path)}.*`; // TODO needs to handle cases where a trailing slash is needed here
-  return `^${schemeRegex}${anchorRegex}${domainRegex}${pathRegex}$`;
+  const pathRegex = `${escapeStringRegexp(json.path)}`;
+  const pathSuffix = json.path.endsWith('/') ? '.*' : '(?:/.*)?';
+  return `^${schemeRegex}${subdomainRegex}${domainRegex}${pathRegex}${pathSuffix}$`;
 };
 
 export const sessionRulesFromCookieJar = (cookieJar, tabIds, ruleIdStart) => {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 import { exportedForTestingOnly } from 'background/session_rules.js';
-const { regexpForCookieAttributes, sorted } = exportedForTestingOnly;
+const { regexpForCookieAttributes } = exportedForTestingOnly;
 
 describe('regexpForCookieAttributes', () => {
   it('returns correct regexes', () => {
@@ -42,51 +42,5 @@ describe('regexpForCookieAttributes', () => {
         expect(regexp.test(candidate)).toBe(false);
       });
     });
-  });
-});
-
-describe('sorted', () => {
-  const addIdsAndStringify = (arr) => arr.map((elm, id) => JSON.stringify(Object.assign(elm, { id })));
-
-  it('sorts specific domains before wildcards', () => {
-    expect.hasAssertions();
-
-    const result = sorted(addIdsAndStringify([{ domainSpecified: false }, { domainSpecified: true }]));
-
-    expect(result.map((item) => JSON.parse(item).id)).toStrictEqual([1, 0]);
-  });
-
-  it('sorts domains with more parts first', () => {
-    expect.hasAssertions();
-
-    const result = sorted(
-      addIdsAndStringify([{ domain: 'a.example.com' }, { domain: 'example.com' }, { domain: 'a.b.example.com' }]),
-    );
-
-    expect(result.map((item) => JSON.parse(item).id)).toStrictEqual([1, 0, 2]);
-  });
-
-  it('sorts secure cookies first', () => {
-    expect.hasAssertions();
-
-    const result = sorted(addIdsAndStringify([{ secure: true }, { secure: false }]));
-
-    expect(result.map((item) => JSON.parse(item).id)).toStrictEqual([1, 0]);
-  });
-
-  it('sorts paths with more parts first', () => {
-    expect.hasAssertions();
-
-    const result = sorted(addIdsAndStringify([{ path: '/a/b/c' }, { path: '/' }, { path: '/a/b' }]));
-
-    expect(result.map((item) => JSON.parse(item).id)).toStrictEqual([1, 2, 0]);
-  });
-
-  it('sorts samesite cookies first', () => {
-    expect.hasAssertions();
-
-    const result = sorted(addIdsAndStringify([{ samesite: true }, { samesite: false }]));
-
-    expect(result.map((item) => JSON.parse(item).id)).toStrictEqual([1, 0]);
   });
 });

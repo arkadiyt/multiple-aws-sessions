@@ -54,7 +54,7 @@ export class Cookie {
           break;
         default:
           // Silently ignore unknown flags
-          console.warn(`Unknown cookie flag '${key}' in cookie string '${cookieStr}'`);
+          console.warn(`Unknown cookie flag '${key.trim()}' in cookie string '${cookieStr}'`);
       }
     }
 

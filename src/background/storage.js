@@ -1,12 +1,13 @@
 import { CookieJar } from 'background/cookie_jar.js';
 
-export const getNextRuleId = async () => {
-  const { ruleId } = await chrome.storage.session.get('ruleId');
-  const result = typeof ruleId === 'undefined' ? 1 : ruleId;
-  return result;
+const getTabs = async () => {
+  const tabsKey = 'tabs';
+  const inverseKey = 'tabsInverse';
+  const result = await chrome.storage.session.get([tabsKey, inverseKey]);
+  const tabs = result[tabsKey] || {};
+  const tabsInverse = result[inverseKey] || {};
+  return [tabs, tabsInverse];
 };
-
-export const saveRuleId = async (id) => await chrome.storage.session.set({ ruleId: id });
 
 export const clearOldRequestKeys = async (expiration) => {
   const keyNames = (await chrome.storage.session.getKeys()).filter((key) => key.startsWith('request_'));
@@ -14,7 +15,7 @@ export const clearOldRequestKeys = async (expiration) => {
   const toRemove = Object.entries(await chrome.storage.session.get(keyNames))
     .filter(([_key, val]) => now - val.timestamp >= expiration)
     .map(([key, _val]) => key);
-  chrome.storage.session.remove(toRemove);
+  return chrome.storage.session.remove(toRemove);
 };
 
 export const setTabIdForRequestId = (requestId, tabId) =>
@@ -25,53 +26,14 @@ export const setTabIdForRequestId = (requestId, tabId) =>
     },
   });
 
-export const saveCookieJar = (cookieJarId, tabIds, cookieJar) => {
-  const id = typeof cookieJarId === 'undefined' ? crypto.randomUUID() : cookieJarId;
-  const toSave = {
-    [`cookie_jar_${id}`]: {
-      cookieJar,
-      tabIds,
-    },
-  };
-
-  for (const tabId of tabIds) {
-    toSave[`tab_${tabId}`] = { cookieJarId: id };
-  }
-
-  return chrome.storage.session.set(toSave);
-};
-
 export const getCookieJarFromTabId = async (tabId) => {
-  const tabKey = `tab_${tabId}`;
-  const tab = await chrome.storage.session.get(tabKey);
-  const { cookieJarId } = tab[tabKey] || {};
-
-  if (typeof cookieJarId === 'undefined') {
-    return [cookieJarId, [tabId], new CookieJar()];
-  }
-
+  const [tabs] = await getTabs();
+  const cookieJarId = tabs[tabId];
   const cookieJarKey = `cookie_jar_${cookieJarId}`;
   const cookieJarDetails = await chrome.storage.session.get(cookieJarKey);
-  const { tabIds, cookieJar } = cookieJarDetails[cookieJarKey] || {};
-  return [cookieJarId, tabIds, CookieJar.unmarshal(cookieJar)];
-};
-
-export const removeTabId = async (tabId) => {
-  const [cookieJarId, tabIds, cookieJar] = await getCookieJarFromTabId(tabId);
-
-  if (typeof cookieJarId === 'undefined') {
-    return void 0;
-  }
-
-  const newTabIds = tabIds.filter((id) => id === tabId);
-  const promises = [chrome.storage.session.remove(`tab_${tabId}`)];
-  if (newTabIds.length === 0) {
-    promises.push(chrome.storage.session.remove(`cookie_jar_${cookieJarId}`));
-  } else {
-    promises.push(saveCookieJar(cookieJarId, newTabIds, cookieJar));
-  }
-
-  return Promise.allSettled(promises);
+  return CookieJar.unmarshal(
+    Object.hasOwn(cookieJarDetails, cookieJarKey) ? cookieJarDetails[cookieJarKey] : { cookies: [] },
+  );
 };
 
 export const getTabIdFromRequestId = async (requestId) => {
@@ -80,3 +42,59 @@ export const getTabIdFromRequestId = async (requestId) => {
   const { tabId } = result[key] || {};
   return tabId;
 };
+
+export const addCookiesToJar = async (tabId, cookies, requestUrl, fromJavascript) => {
+  const [tabs, tabsInverse] = await getTabs();
+  const cookieJarId = tabs[tabId];
+  const cookieJarKey = `cookie_jar_${cookieJarId}`;
+
+  return navigator.locks.request(cookieJarKey, async () => {
+    const cookieJarDetails = await chrome.storage.session.get(cookieJarKey);
+    const cookieJar = CookieJar.unmarshal(cookieJarDetails[cookieJarKey] || { cookies: [] });
+    cookieJar.upsertCookies(cookies, requestUrl, fromJavascript);
+    await chrome.storage.session.set({
+      [cookieJarKey]: cookieJar,
+    });
+    return [tabsInverse[cookieJarId], cookieJar];
+  });
+};
+
+const saveTabs = (tabs, tabsInverse) => chrome.storage.session.set({ tabs, tabsInverse });
+
+export const setCookieJarIdForTab = (tabId, openerTabId) =>
+  navigator.locks.request('tabs', async () => {
+    const [tabs, tabsInverse] = await getTabs();
+
+    if (typeof openerTabId !== 'undefined' && typeof tabs[openerTabId] !== 'undefined') {
+      const cookieJarId = tabs[openerTabId];
+      tabs[tabId] = cookieJarId;
+      tabsInverse[cookieJarId].push(tabId);
+    } else {
+      tabs[tabId] = crypto.randomUUID();
+      tabsInverse[tabs[tabId]] = [tabId];
+    }
+
+    await saveTabs(tabs, tabsInverse);
+
+    return tabsInverse[tabs[tabId]];
+  });
+
+export const removeTabId = (tabId) =>
+  navigator.locks.request('tabs', async () => {
+    const [tabs, tabsInverse] = await getTabs();
+
+    if (typeof tabs[tabId] === 'undefined') {
+      return;
+    }
+
+    const cookieJarId = tabs[tabId];
+    delete tabs[tabId];
+    tabsInverse[cookieJarId] = tabsInverse[cookieJarId].filter((item) => item !== tabId);
+
+    await saveTabs(tabs, tabsInverse);
+
+    if (tabsInverse[cookieJarId].length === 0) {
+      // No await, no lock on cookie jar
+      chrome.storage.session.remove(`cookie_jar_${cookieJarId}`);
+    }
+  });

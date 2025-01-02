@@ -75,7 +75,7 @@ chrome.webRequest.onHeadersReceived.addListener(
   async (details) => {
     const cookies = [];
     for (const header of details.responseHeaders) {
-      if (header.name === 'set-cookie') {
+      if (header.name.toLowerCase() === 'set-cookie') {
         // In Chrome every set-cookie header is a separate array entry in details.responseHeaders
         // In Firefox there is a single set-cookie header, with all values joined together with newlines
         for (const cookieHeaderValue of header.value.split('\n')) {

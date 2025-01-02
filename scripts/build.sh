@@ -24,7 +24,6 @@ for TARGET in $TARGETS; do
     npx web-ext lint -s "$WORK_DIR"
     npx web-ext build -s "$WORK_DIR" -a build/
     mv "build/multiple_aws_sessions-$VERSION.zip" "build/$TARGET-$VERSION.zip"
-    npx web-ext run -s "$WORK_DIR" --devtools
   fi
 
   if [ "$TARGET" = "edge" ]; then  

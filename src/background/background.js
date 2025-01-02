@@ -1,21 +1,21 @@
 import { CMD_INJECT_COOKIES, CMD_LOADED, CMD_PARSE_NEW_COOKIE } from 'shared.js';
 import { Cookie, cookieHeader } from 'background/cookie.js';
+import { MAX_RULE_ID, sessionRulesFromCookieJar } from 'background/session_rules.js';
 import {
+  addCookiesToJar,
   clearOldRequestKeys,
   getCookieJarFromTabId,
-  getNextRuleId,
   getTabIdFromRequestId,
   removeTabId,
-  saveCookieJar,
-  saveRuleId,
+  setCookieJarIdForTab,
   setTabIdForRequestId,
 } from 'background/storage.js';
 import { onHeadersReceivedOptions, supportsListingSessionStorageKeys } from 'background/browser.js';
 import { RESOURCE_TYPES } from 'background/common.js';
-import { sessionRulesFromCookieJar } from 'background/session_rules.js';
 
-const INTERCEPT_URLS = ['*://*.aws.amazon.com/*'];
+const INTERCEPT_URL = '*://*.aws.amazon.com/*';
 
+// TODO: remove after the race condition refactoring
 (async () => {
   if (supportsListingSessionStorageKeys === false) {
     console.warn('Listing storage keys is not supported, old storage will not be reaped');
@@ -39,7 +39,7 @@ const INTERCEPT_URLS = ['*://*.aws.amazon.com/*'];
   });
 })();
 
-const sendUpdatedCookiesToTabs = async (cookieJar, tabIds) => {
+const sendUpdatedCookiesToTabs = (cookieJar, tabIds) => {
   const promises = tabIds.map((tabId) =>
     chrome.tabs.get(tabId).then((tab) => {
       if (typeof tab.url === 'undefined') {
@@ -55,48 +55,41 @@ const sendUpdatedCookiesToTabs = async (cookieJar, tabIds) => {
     }),
   );
 
-  try {
-    await Promise.allSettled(promises);
-  } catch (err) {
-    // Safe to ignore "Error: No tab with id: <id>."
-    console.warn(err);
-  }
+  // Promise.allSettled swallows exceptions which is fine, we don't care about "Error: No tab with id: <id>."
+  return Promise.allSettled(promises);
 };
 
-const updateSessionRules = async (cookieJar, tabIds) => {
-  const existingSessionRules = await chrome.declarativeNetRequest.getSessionRules();
-  const ruleIds = existingSessionRules
-    .filter((rule) => (rule.condition.tabIds || []).some((tabId) => tabIds.includes(tabId)))
-    .map((rule) => rule.id);
-  const ruleIdStart = await getNextRuleId();
-  const rules = sessionRulesFromCookieJar(cookieJar, tabIds, ruleIdStart);
+const updateSessionRules = (cookieJar, tabIds) => {
+  const updateSessionRulesLock = navigator.locks.request('updateSessionRules', async () => {
+    const existingSessionRules = await chrome.declarativeNetRequest.getSessionRules();
+    const ruleIdStart =
+      existingSessionRules.length > 0 ? existingSessionRules[existingSessionRules.length - 1].id + 1 : 0;
+    const addRules = sessionRulesFromCookieJar(cookieJar, tabIds, ruleIdStart);
+    const removeRuleIds = existingSessionRules
+      .filter((rule) => (rule.condition.tabIds || []).some((tabId) => tabIds.includes(tabId)))
+      .map((rule) => rule.id);
+    await chrome.declarativeNetRequest.updateSessionRules({ addRules, removeRuleIds });
+  });
 
-  return Promise.allSettled([
-    chrome.declarativeNetRequest.updateSessionRules({
-      addRules: rules,
-      removeRuleIds: ruleIds,
-    }),
-    saveRuleId(ruleIdStart + rules.length),
-    sendUpdatedCookiesToTabs(cookieJar, tabIds),
-  ]);
+  return Promise.all([updateSessionRulesLock, sendUpdatedCookiesToTabs(cookieJar, tabIds)]);
 };
 
 // If a new tab is opened from a tab we're hooking, make sure the new tab gets the same cookies as the existing tab
 chrome.tabs.onCreated.addListener(async (details) => {
-  if (typeof details.openerTabId === 'undefined') {
+  const tabIds = await setCookieJarIdForTab(
+    details.id,
+    typeof details.pendingUrl === 'undefined' ? void 0 : details.openerTabId,
+  );
+
+  const cookieJar = await getCookieJarFromTabId(details.id);
+  if (cookieJar.length() === 0) {
     return;
   }
 
-  const [cookieJarId, tabIds, cookieJar] = await getCookieJarFromTabId(details.openerTabId);
-  if (typeof cookieJarId === 'undefined') {
-    return;
-  }
-
-  tabIds.push(details.id);
-  saveCookieJar(cookieJarId, tabIds, cookieJar);
   updateSessionRules(cookieJar, tabIds);
 });
 
+// This does not update any session rules, only removes storage
 chrome.tabs.onRemoved.addListener(removeTabId);
 
 // Keep track of what tabs are initiating which requests
@@ -106,7 +99,7 @@ chrome.webRequest.onBeforeRequest.addListener(
   },
   {
     types: RESOURCE_TYPES,
-    urls: INTERCEPT_URLS,
+    urls: [INTERCEPT_URL],
   },
 );
 
@@ -123,23 +116,23 @@ chrome.webRequest.onHeadersReceived.addListener(
       }
     }
 
+    // If we got no cookies in this request, return immediately
     if (cookies.length === 0) {
       return;
     }
 
     const tabId = await getTabIdFromRequestId(details.requestId);
     if (typeof tabId === 'undefined') {
-      console.warn(`Received headers for request ${details.requestId} with no corresponding tabId`);
+      console.warn(`Received cookies for request ${details.requestId} with no corresponding tabId`);
       return;
     }
-    const [cookieJarId, tabIds, cookieJar] = await getCookieJarFromTabId(tabId);
-    cookieJar.upsertCookies(cookies, details.url, false);
-    saveCookieJar(cookieJarId, tabIds, cookieJar);
-    updateSessionRules(cookieJar, tabIds);
+
+    const [tabIds, cookieJar] = await addCookiesToJar(tabId, cookies, details.url, false);
+    await updateSessionRules(cookieJar, tabIds);
   },
   {
     types: RESOURCE_TYPES,
-    urls: INTERCEPT_URLS,
+    urls: [INTERCEPT_URL],
   },
   onHeadersReceivedOptions,
 );
@@ -150,7 +143,7 @@ chrome.webRequest.onHeadersReceived.addListener(
 (() => {
   const eventHandlers = {
     [CMD_LOADED]: async (_message, tab) => {
-      const [, , cookieJar] = await getCookieJarFromTabId(tab.id);
+      const cookieJar = await getCookieJarFromTabId(tab.id);
       const tabUrl = new URL(tab.url);
       const matching = cookieJar.matching({ domain: tabUrl.hostname, httponly: false, path: tabUrl.pathname });
       chrome.tabs.sendMessage(tab.id, {
@@ -159,10 +152,8 @@ chrome.webRequest.onHeadersReceived.addListener(
       });
     },
     [CMD_PARSE_NEW_COOKIE]: async (message, tab) => {
-      const [cookieJarId, tabIds, cookieJar] = await getCookieJarFromTabId(tab.id);
-      cookieJar.upsertCookies([message.cookies], tab.url, true);
-      saveCookieJar(cookieJarId, tabIds, cookieJar);
-      sendUpdatedCookiesToTabs(cookieJar, tabIds);
+      const [tabIds, cookieJar] = await addCookiesToJar(tab.id, [message.cookies], tab.url, true);
+      await updateSessionRules(cookieJar, tabIds);
     },
   };
   chrome.runtime.onMessage.addListener((message, sender) => {
@@ -183,10 +174,42 @@ chrome.webRequest.onHeadersReceived.addListener(
 })();
 
 /**
- * Clear all existing session rules and storage on load
+ * Clear all existing session rules and storage on reload
  */
-chrome.runtime.onInstalled.addListener(async () => {
-  chrome.storage.session.clear();
-  const removeRuleIds = (await chrome.declarativeNetRequest.getSessionRules()).map((rule) => rule.id);
-  chrome.declarativeNetRequest.updateSessionRules({ removeRuleIds });
-});
+
+(() => {
+  // Add this rule on load / have this always be set
+  // This ensures that
+  // 1) later append operations are appending onto a blank slate, and
+  // 2) navigating to AWS in a manually opened new tab (e.g. via cmd+T and pasting the url) doesn't get some residual browser cookies
+  const addRules = [
+    {
+      action: {
+        requestHeaders: [
+          {
+            header: 'cookie',
+            operation: 'set',
+            value: '',
+          },
+        ],
+        type: 'modifyHeaders',
+      },
+      condition: {
+        resourceTypes: RESOURCE_TYPES,
+        urlFilter: INTERCEPT_URL,
+      },
+      id: 1,
+      priority: MAX_RULE_ID,
+    },
+  ];
+
+  chrome.runtime.onInstalled.addListener(async () => {
+    chrome.storage.session.clear();
+    const removeRuleIds = (await chrome.declarativeNetRequest.getSessionRules()).map((rule) => rule.id);
+    chrome.declarativeNetRequest.updateSessionRules({ addRules, removeRuleIds });
+  });
+
+  chrome.runtime.onStartup.addListener(() => {
+    chrome.declarativeNetRequest.updateSessionRules({ addRules });
+  });
+})();

@@ -79,6 +79,16 @@ describe('cookiejar', () => {
     });
   });
 
+  it("doesn't overwrite httpoly cookies from javascript", () => {
+    expect.hasAssertions();
+
+    const cookieJar = new CookieJar();
+    cookieJar.upsertCookie(cs('a', 'b', { httponly: true }), 'https://example.com', false);
+    cookieJar.upsertCookie(cs('a', 'c', {}), 'https://example.com', true);
+
+    expect(cookieJar.getCookies()[0].value).toBe('b');
+  });
+
   it('does not insert expired cookies', () => {
     expect.hasAssertions();
 

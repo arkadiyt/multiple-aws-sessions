@@ -71,14 +71,18 @@ export class CookieJar {
     );
     const shouldDelete = cookie.value === '' || cookie.expired();
     if (index !== -1) {
-      if (shouldDelete) {
+      if (fromJavascript === true && this.cookies[index].httponly === true) {
+        // Don't allow updating or deleting httponly cookies from javascript
+        return;
+      }
+      if (shouldDelete === true) {
         // If found an existing cookie and the new one is blank, delete the existing one
         this.cookies.splice(index, 1);
       } else {
         // If found an existing cookie and the new one is not blank, update the existing one
         this.cookies[index] = cookie;
       }
-    } else if (!shouldDelete) {
+    } else if (shouldDelete === false) {
       // If there was no existing cooie and the new one is not blank, add it to the jar
       this.cookies.push(cookie);
     }

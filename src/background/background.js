@@ -1,43 +1,11 @@
 import { CMD_INJECT_COOKIES, CMD_LOADED, CMD_PARSE_NEW_COOKIE } from 'shared.js';
 import { Cookie, cookieHeader } from 'background/cookie.js';
 import { MAX_RULE_ID, sessionRulesFromCookieJar } from 'background/session_rules.js';
-import {
-  addCookiesToJar,
-  clearOldRequestKeys,
-  getCookieJarFromTabId,
-  getTabIdFromRequestId,
-  removeTabId,
-  setCookieJarIdForTab,
-  setTabIdForRequestId,
-} from 'background/storage.js';
-import { onHeadersReceivedOptions, supportsListingSessionStorageKeys } from 'background/browser.js';
+import { CookieJarStorage } from 'background/storage/cookie_jar.js';
 import { RESOURCE_TYPES } from 'background/common.js';
+import { RequestIdStorage } from 'background/storage/request_id.js';
 
 const INTERCEPT_URL = '*://*.aws.amazon.com/*';
-
-// TODO: remove after the race condition refactoring
-(async () => {
-  if (supportsListingSessionStorageKeys === false) {
-    console.warn('Listing storage keys is not supported, old storage will not be reaped');
-    return;
-  }
-
-  const ALARM_NAME = 'reaper';
-  const EXPIRE_AFTER = 60000;
-
-  const alarm = await chrome.alarms.get(ALARM_NAME);
-  if (!alarm) {
-    chrome.alarms.create(ALARM_NAME, { periodInMinutes: 1 });
-  }
-
-  chrome.alarms.onAlarm.addListener((details) => {
-    if (details.name !== ALARM_NAME) {
-      return;
-    }
-
-    clearOldRequestKeys(EXPIRE_AFTER);
-  });
-})();
 
 const sendUpdatedCookiesToTabs = (cookieJar, tabIds) => {
   const promises = tabIds.map((tabId) =>
@@ -76,12 +44,12 @@ const updateSessionRules = (cookieJar, tabIds) => {
 
 // If a new tab is opened from a tab we're hooking, make sure the new tab gets the same cookies as the existing tab
 chrome.tabs.onCreated.addListener(async (details) => {
-  const tabIds = await setCookieJarIdForTab(
+  const tabIds = await CookieJarStorage.setCookieJarIdForTab(
     details.id,
     typeof details.pendingUrl === 'undefined' ? void 0 : details.openerTabId,
   );
 
-  const cookieJar = await getCookieJarFromTabId(details.id);
+  const cookieJar = await CookieJarStorage.getCookieJarFromTabId(details.id);
   if (cookieJar.length() === 0) {
     return;
   }
@@ -90,12 +58,12 @@ chrome.tabs.onCreated.addListener(async (details) => {
 });
 
 // This does not update any session rules, only removes storage
-chrome.tabs.onRemoved.addListener(removeTabId);
+chrome.tabs.onRemoved.addListener(CookieJarStorage.removeTabId);
 
 // Keep track of what tabs are initiating which requests
 chrome.webRequest.onBeforeRequest.addListener(
   (details) => {
-    setTabIdForRequestId(details.requestId, details.tabId);
+    RequestIdStorage.setTabIdForRequestId(details.requestId, details.tabId);
   },
   {
     types: RESOURCE_TYPES,
@@ -121,20 +89,29 @@ chrome.webRequest.onHeadersReceived.addListener(
       return;
     }
 
-    const tabId = await getTabIdFromRequestId(details.requestId);
+    const tabId = await RequestIdStorage.getTabIdFromRequestId(details.requestId);
     if (typeof tabId === 'undefined') {
       console.warn(`Received cookies for request ${details.requestId} with no corresponding tabId`);
       return;
     }
 
-    const [tabIds, cookieJar] = await addCookiesToJar(tabId, cookies, details.url, false);
+    const [tabIds, cookieJar] = await CookieJarStorage.addCookiesToJar(tabId, cookies, details.url, false);
     await updateSessionRules(cookieJar, tabIds);
   },
   {
     types: RESOURCE_TYPES,
     urls: [INTERCEPT_URL],
   },
-  onHeadersReceivedOptions,
+  /**
+   * When calling chrome.webRequest.onHeadersReceived.addListener, the last option specifies whether or not response
+   * headers should be included. In Firefox and others just specifying "responseHeaders" is sufficient. For Chrome it used to be,
+   * but starting in Chrome 72 you need to specify "extraHeaders" to receive the Cookie header and some other sensitive headers.
+   * Specifying this option causes an error in Firefox, so the value below contains the right options to include depending on
+   * whether the current browser needs it or not
+   */
+  ['responseHeaders', chrome.webRequest.OnHeadersReceivedOptions.EXTRA_HEADERS].filter(
+    (opt) => typeof opt !== 'undefined',
+  ),
 );
 
 /**
@@ -143,7 +120,7 @@ chrome.webRequest.onHeadersReceived.addListener(
 (() => {
   const eventHandlers = {
     [CMD_LOADED]: async (_message, tab) => {
-      const cookieJar = await getCookieJarFromTabId(tab.id);
+      const cookieJar = await CookieJarStorage.getCookieJarFromTabId(tab.id);
       const tabUrl = new URL(tab.url);
       const matching = cookieJar.matching({ domain: tabUrl.hostname, httponly: false, path: tabUrl.pathname });
       chrome.tabs.sendMessage(tab.id, {
@@ -152,7 +129,7 @@ chrome.webRequest.onHeadersReceived.addListener(
       });
     },
     [CMD_PARSE_NEW_COOKIE]: async (message, tab) => {
-      const [tabIds, cookieJar] = await addCookiesToJar(tab.id, [message.cookies], tab.url, true);
+      const [tabIds, cookieJar] = await CookieJarStorage.addCookiesToJar(tab.id, [message.cookies], tab.url, true);
       await updateSessionRules(cookieJar, tabIds);
     },
   };
@@ -189,7 +166,7 @@ chrome.webRequest.onHeadersReceived.addListener(
           {
             header: 'cookie',
             operation: 'set',
-            value: '',
+            value: ' ', // Chrome allows an empty string but Firefox requires some value
           },
         ],
         type: 'modifyHeaders',
@@ -211,5 +188,23 @@ chrome.webRequest.onHeadersReceived.addListener(
 
   chrome.runtime.onStartup.addListener(() => {
     chrome.declarativeNetRequest.updateSessionRules({ addRules });
+
+    (async () => {
+      const ALARM_NAME = 'reaper';
+      const EXPIRE_AFTER = 60000;
+
+      const alarm = await chrome.alarms.get(ALARM_NAME);
+      if (!alarm) {
+        chrome.alarms.create(ALARM_NAME, { periodInMinutes: 1 });
+      }
+
+      chrome.alarms.onAlarm.addListener((details) => {
+        if (details.name !== ALARM_NAME) {
+          return;
+        }
+
+        RequestIdStorage.clearOldRequestKeys(EXPIRE_AFTER);
+      });
+    })();
   });
 })();

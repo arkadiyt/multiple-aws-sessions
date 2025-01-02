@@ -8,7 +8,7 @@ const regexpForCookieAttributes = (cookie) => {
   const schemeRegex = cookie.secure ? 'https://' : 'https?://';
   const subdomainRegex = cookie.domainSpecified ? '(?:(?:[a-z0-9-]*\\.)*)?' : '';
   const domainRegex = escapeStringRegexp(cookie.domain);
-  const pathRegex = `${escapeStringRegexp(cookie.path)}`;
+  const pathRegex = escapeStringRegexp(cookie.path);
   const pathSuffix = cookie.path.endsWith('/') ? '.*' : '(?:/.*)?';
   return `^${schemeRegex}${subdomainRegex}${domainRegex}${pathRegex}${pathSuffix}$`;
 };
@@ -22,6 +22,7 @@ export const sessionRulesFromCookieJar = (cookieJar, tabIds, ruleIdStart) => {
           {
             header: 'cookie',
             operation: 'append',
+            // Chrome seems to inject a semicolon automatically
             value: cookie.toString(),
           },
         ],
@@ -38,7 +39,7 @@ export const sessionRulesFromCookieJar = (cookieJar, tabIds, ruleIdStart) => {
       priority: index + 1,
     };
 
-    // TODO think through this
+    // This treats both strict _and_ lax cookies as if they were strict
     if (['strict', 'lax'].includes(cookie.samesite)) {
       rule.condition.domainType = 'firstParty';
     }

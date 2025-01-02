@@ -64,7 +64,6 @@ export default [
       'no-ternary': 'off',
       'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
       'no-void': 'off',
-      'no-warning-comments': 'off',
       'one-var': ['error', 'never'],
       'prefer-named-capture-group': 'off',
     },

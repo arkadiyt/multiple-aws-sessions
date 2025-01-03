@@ -1,8 +1,27 @@
-import { RESOURCE_TYPES } from 'background/common.js';
+import { INTERCEPT_URL, RESOURCE_TYPES } from 'background/common.js';
 import escapeStringRegexp from 'escape-string-regexp';
 
 // Chrome requires the rule id / priority to be 32 bit signed integer
 export const MAX_RULE_ID = 2 ** 31 - 1;
+
+export const CLEAR_RULE = {
+  action: {
+    requestHeaders: [
+      {
+        header: 'cookie',
+        operation: 'set',
+        value: ' ', // Chrome allows an empty string but Firefox requires some value
+      },
+    ],
+    type: 'modifyHeaders',
+  },
+  condition: {
+    resourceTypes: RESOURCE_TYPES,
+    urlFilter: INTERCEPT_URL,
+  },
+  id: 1,
+  priority: MAX_RULE_ID,
+};
 
 const regexpForCookieAttributes = (cookie) => {
   const schemeRegex = cookie.secure ? 'https://' : 'https?://';
@@ -13,6 +32,8 @@ const regexpForCookieAttributes = (cookie) => {
   return `^${schemeRegex}${subdomainRegex}${domainRegex}${pathRegex}${pathSuffix}$`;
 };
 
+// Try to get the more optimal approach working again?
+
 export const sessionRulesFromCookieJar = (cookieJar, tabIds, ruleIdStart) => {
   const cookies = cookieJar.getCookies();
   return cookies.map((cookie, index) => {
@@ -22,7 +43,7 @@ export const sessionRulesFromCookieJar = (cookieJar, tabIds, ruleIdStart) => {
           {
             header: 'cookie',
             operation: 'append',
-            // Chrome seems to inject a semicolon automatically
+            // Browsers append a semicolon automatically
             value: cookie.toString(),
           },
         ],

@@ -56,6 +56,23 @@ export class CookieJarStorage {
       return tabsInverse[tabs[tabId]];
     });
 
+  static setCookieJarsForInitialTabs = (tabIds) => {
+    if (tabIds.length === 0) {
+      return;
+    }
+
+    navigator.locks.request('tabs', async () => {
+      const [tabs, tabsInverse] = await this.#getTabs();
+
+      for (const tabId of tabIds) {
+        tabs[tabId] = crypto.randomUUID();
+        tabsInverse[tabs[tabId]] = [tabId];
+      }
+
+      await this.#saveTabs(tabs, tabsInverse);
+    });
+  };
+
   static removeTabId = (tabId) =>
     navigator.locks.request('tabs', async () => {
       const [tabs, tabsInverse] = await this.#getTabs();

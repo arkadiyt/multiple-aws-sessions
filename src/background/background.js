@@ -63,6 +63,10 @@ chrome.tabs.onRemoved.addListener(CookieJarStorage.removeTabId);
 // Keep track of what tabs are initiating which requests
 chrome.webRequest.onBeforeRequest.addListener(
   (details) => {
+    if (details.tabId === chrome.tabs.TAB_ID_NONE) {
+      // Request unrelated to a tab
+      return;
+    }
     RequestIdStorage.setTabIdForRequestId(details.requestId, details.tabId);
   },
   {
@@ -91,7 +95,7 @@ chrome.webRequest.onHeadersReceived.addListener(
 
     const tabId = await RequestIdStorage.getTabIdFromRequestId(details.requestId);
     if (typeof tabId === 'undefined') {
-      console.warn(`Received cookies for request ${details.requestId} with no corresponding tabId`);
+      console.warn(`Received cookies for request ${details.requestId} with no corresponding tabId`, details);
       return;
     }
 

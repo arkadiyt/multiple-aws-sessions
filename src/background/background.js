@@ -44,9 +44,10 @@ const updateSessionRules = (cookieJar, tabIds) => {
 
 // If a new tab is opened from a tab we're hooking, make sure the new tab gets the same cookies as the existing tab
 chrome.tabs.onCreated.addListener(async (details) => {
+  // Need to test this logic for firefox + others
   const tabIds = await CookieJarStorage.setCookieJarIdForTab(
     details.id,
-    typeof details.pendingUrl === 'undefined' ? void 0 : details.openerTabId,
+    typeof details.pendingUrl === 'undefined' && details.status !== 'complete' ? void 0 : details.openerTabId,
   );
 
   const cookieJar = await CookieJarStorage.getCookieJarFromTabId(details.id);

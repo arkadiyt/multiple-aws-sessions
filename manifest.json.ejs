@@ -5,19 +5,17 @@
   "default_locale": "en_US",
   "permissions": ["alarms", "declarativeNetRequest", "storage", "webRequest"],
   "background": {
-    <% if (target === 'chrome') { %>
-    "service_worker": "dist/background.js"
-    <% } else if (target === 'firefox') { %>
-    "scripts": ["dist/background.js"]
+    <% if (target === 'firefox') { %>
+      "scripts": ["dist/background.js"]
     <% } else { %>
-    <% throw new Error(`Unknown target '${target}'`) %>
+    "service_worker": "dist/background.js"
     <% } %>
   },
   "content_scripts": [
     {
       "matches": ["*://*.aws.amazon.com/*"],
       "js": ["dist/content_script_isolated.js"],
-      "run_at": "document_end"
+      "run_at": "document_start"
     }
   ],
   "icons": {

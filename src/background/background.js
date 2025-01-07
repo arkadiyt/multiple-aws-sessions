@@ -36,6 +36,7 @@ const updateSessionRules = (cookieJar, tabIds) => {
     const removeRuleIds = existingSessionRules
       .filter((rule) => (rule.condition.tabIds || []).some((tabId) => tabIds.includes(tabId)))
       .map((rule) => rule.id);
+
     await chrome.declarativeNetRequest.updateSessionRules({ addRules, removeRuleIds });
   });
 
@@ -55,7 +56,7 @@ chrome.tabs.onCreated.addListener(async (details) => {
     return;
   }
 
-  updateSessionRules(cookieJar, tabIds);
+  await updateSessionRules(cookieJar, tabIds);
 });
 
 // This does not update any session rules, only removes storage

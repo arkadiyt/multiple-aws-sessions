@@ -1,6 +1,10 @@
+All browsers:
+
+- You can no longer "View Page Source" for AWS pages
+
 Chrome/Edge/Opera:
 
-- Opening a tab in a new window (right click a link -> "Open Link in New Window") will not carry over cookies from the tab you're opening from. To work around this, open the link in a new tab in the same window first (e.g. by cmd+clicking it), and then move the tab out into a new window
+- Opening an AWS tab in a new window (right click a link -> "Open Link in New Window") will not carry over cookies from the tab you're opening from (you'll be signed out in the new window). To work around this, open the link in a new tab in the same window first (e.g. by cmd+clicking it), and then move the tab out into a new window
 
 Safari:
 

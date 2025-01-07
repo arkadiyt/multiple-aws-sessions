@@ -1,6 +1,6 @@
 {
   "name": "__MSG_appName__",
-  "version": "0.0.6",
+  "version": "0.0.8",
   "description": "__MSG_appDesc__",
   "default_locale": "en_US",
   "permissions": ["alarms", "declarativeNetRequest", "storage", "webRequest"],
@@ -31,7 +31,9 @@
   <% if (target === 'firefox') { %>
   "browser_specific_settings": {
     "gecko": {
-      "id": "{3168b424-1871-4b5a-977a-b1f15261c2a5}"
+      "id": "{3168b424-1871-4b5a-977a-b1f15261c2a5}",
+      <%# 135 fixes this bug: https://bugzilla.mozilla.org/show_bug.cgi?id=1939981 %>
+      <%# TODO "strict_min_version": "135.0" %>
     }
   },
   <% } %>

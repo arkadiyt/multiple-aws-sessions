@@ -1,22 +1,6 @@
-All browsers:
+Chrome/Edge/Opera:
 
--
-
-Chrome:
-
-- Opening a tab in a new window (right click a link -> "Open Link in New Window") will not carry over cookies from the tab you're on. To work around this, open the link in a new tab first (e.g. by cmd+clicking it), and then move the tab out into a new window
-
-Firefox:
-
--
-
-Edge:
-
--
-
-Opera:
-
--
+- Opening a tab in a new window (right click a link -> "Open Link in New Window") will not carry over cookies from the tab you're opening from. To work around this, open the link in a new tab in the same window first (e.g. by cmd+clicking it), and then move the tab out into a new window
 
 Safari:
 

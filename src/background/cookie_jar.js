@@ -6,6 +6,7 @@ const pathMatch = (cookie, path) =>
   cookie.path === path ||
   (path.startsWith(cookie.path) && (cookie.path.slice(-1) === '/' || path[cookie.path.length] === '/'));
 
+// TODO replace fromJavascript to fromHttp to make it a safer default
 export class CookieJar {
   constructor() {
     this.cookies = [];

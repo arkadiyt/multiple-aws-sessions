@@ -51,7 +51,7 @@ const rule = (cookie, tabIds, id, priority) => ({
     tabIds,
   },
   // Wrap back around if we ever get too high, the rules at the beginning of the range will have probably been cleared by now
-  // Could be improved to find explicitly available rule ids
+  // TODO Could be improved to find explicitly available rule ids
   id: id % MAX_RULE_ID,
   priority,
 });
@@ -63,15 +63,16 @@ export const sessionRulesFromCookieJar = (cookieJar, tabIds, ruleIdStart) => {
   for (const cookie of cookies) {
     rules.push(rule(cookie, tabIds, ruleIdStart + rules.length + 1, rules.length + 1));
 
-    if (cookie.samesite === 'strict') {
-      rules[rules.length - 1].condition.initiatorDomains = [psl.parse(cookie.domain).domain];
-    } else if (cookie.samesite === 'lax') {
-      rules[rules.length - 1].condition.initiatorDomains = [psl.parse(cookie.domain).domain];
-      rules[rules.length - 1].condition.requestMethods = ['connect', 'delete', 'patch', 'post', 'put', 'other'];
-      rules.push(rule(cookie, tabIds, ruleIdStart + rules.length + 1, rules.length + 1));
-      rules[rules.length - 1].condition.resourceTypes = ['main_frame'];
-      rules[rules.length - 1].condition.requestMethods = ['get', 'head', 'options'];
-    }
+    // if (cookie.samesite === 'strict') {
+    //   rules[rules.length - 1].condition.initiatorDomains = [psl.parse(cookie.domain).domain];
+    // }
+    // } else if (cookie.samesite === 'lax') {
+    //   rules[rules.length - 1].condition.initiatorDomains = [psl.parse(cookie.domain).domain];
+    //   rules[rules.length - 1].condition.requestMethods = ['connect', 'delete', 'patch', 'post', 'put', 'other'];
+    //   rules.push(rule(cookie, tabIds, ruleIdStart + rules.length + 1, rules.length + 1));
+    //   rules[rules.length - 1].condition.resourceTypes = ['main_frame'];
+    //   rules[rules.length - 1].condition.requestMethods = ['get', 'head', 'options'];
+    // }
   }
 
   return rules;

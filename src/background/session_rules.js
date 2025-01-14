@@ -26,7 +26,7 @@ export const CLEAR_RULE = {
 
 const regexpForCookieAttributes = (cookie) => {
   const schemeRegex = cookie.secure ? 'https://' : 'https?://';
-  const subdomainRegex = cookie.domainSpecified ? '(?:(?:[a-z0-9-]*\\.)*)?' : '';
+  const subdomainRegex = cookie.domainSpecified ? '(?:[a-z0-9-]*\\.)*' : '';
   const domainRegex = escapeStringRegexp(cookie.domain);
   const pathRegex = escapeStringRegexp(cookie.path);
   const pathSuffix = cookie.path.endsWith('/') ? '.*' : '(?:/.*)?';

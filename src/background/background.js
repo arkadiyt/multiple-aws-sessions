@@ -46,8 +46,8 @@ const updateSessionRules = (cookieJar, tabIds) => {
 
 // If a new tab is opened from a tab we're hooking, make sure the new tab gets the same cookies as the existing tab
 chrome.tabs.onCreated.addListener(async (details) => {
-  console.log('tabs.onCreated', details);
-  TabHookStorage.pauseTabNavigation(details.id, details.openerTabId)
+  // console.log('tabs.onCreated', details);
+  
   // const { promise, resolve } = Promise.withResolvers();
   // tabRulesUpdated[details.id] = { openerTabId: details.openerTabId, resolve };
 
@@ -55,6 +55,10 @@ chrome.tabs.onCreated.addListener(async (details) => {
   const openerTabId =
     typeof details.pendingUrl === 'undefined' && details.status !== 'complete' ? void 0 : details.openerTabId;
 
+    // if (typeof openerTabId !== 'undefined') {
+    //   TabHookStorage.pauseTabNavigation(details.id, details.openerTabId)
+    // }
+    
   const cookieJar = await CookieJarStorage.getCookieJarFromTabId(details.openerTabId);
   // This is very subtle usage of when to use which openerTabId / needs more documentation
   const tabIds = await CookieJarStorage.setCookieJarIdForTab(
@@ -63,12 +67,12 @@ chrome.tabs.onCreated.addListener(async (details) => {
   );
 
   if (cookieJar.length() === 0) {
-    TabHookStorage.resumeTabNavigation(details.id)
+    // TabHookStorage.resumeTabNavigation(details.id)
     return;
   }
 
   await updateSessionRules(cookieJar, tabIds);
-  const url = TabHookStorage.resumeTabNavigation(details.id);
+  // const url = TabHookStorage.resumeTabNavigation(details.id);
   console.log('tabCreated url', url)
   await chrome.tabs.update(details.id, { url });
 });
@@ -76,43 +80,98 @@ chrome.tabs.onCreated.addListener(async (details) => {
 // This does not update any session rules, only removes storage
 chrome.tabs.onRemoved.addListener(CookieJarStorage.removeTabId);
 
-['onBeforeNavigate', 'onCommitted'].forEach((event) => {
-  chrome.webNavigation[event].addListener(
-    async (details) => {
-      if (details.frameType !== 'outermost_frame') {
-        return;
-      }
+// ['onErrorOccurred', 'onDOMContentLoaded', 'onCompleted'].forEach((event) => {
+//   chrome.webNavigation[event].addListener((details) => {
+//     if (details.frameType !== 'outermost_frame') {
+//       return;
+//     }
+//     console.log(`chrome.webNavigation.${event}`, details);
+//   });
+// });
 
-      // if (TabHookStorage.isPaused(details.tabId)) {
-      //   return;
-      // }
+// [/*'onBeforeNavigate',*/ 'onCommitted'].forEach((event) => {
+//   chrome.webNavigation[event].addListener(
+//     async (details) => {
+//       if (details.frameType !== 'outermost_frame') {
+//         return;
+//       }
 
-      const tabId = TabHookStorage.cookieTabForTabId(details.tabId)
-      if (typeof tabId === 'undefined') {
-        return;
-      }
+//       // if (details.initiator)
 
-      console.log(`chrome.webNavigation.${event}`, details);
 
-      const cookieJar = await CookieJarStorage.getCookieJarFromTabId(tabId);
-      if (cookieJar.length() === 0) {
-        // TabHookStorage.resumeTabNavigation(details.id)
-        return;
-      }
+//       // if (TabHookStorage.isPaused(details.tabId)) {
+//       //   return;
+//       // }
 
-      TabHookStorage.updateValue(details.tabId, details.url);
-      console.log(`${event} updating to about:blank`)
-      await chrome.tabs.update(details.tabId, { url: 'about:blank' });
-    },
-    {
-      url: [
-        {
-          hostSuffix: 'aws.amazon.com', // TODO
-        },
-      ],
-    },
-  );
-});
+//       const tabId = TabHookStorage.cookieTabForTabId(details.tabId)
+//       if (typeof tabId === 'undefined') {
+//         return;
+//       }
+
+//       console.log(`chrome.webNavigation.${event}`, details);
+
+
+//       const cookieJar = await CookieJarStorage.getCookieJarFromTabId(tabId);
+//       if (cookieJar.length() === 0) {
+//         console.log(`${event} resuming because no cookies`)
+//         TabHookStorage.resumeTabNavigation(details.id)
+//         return;
+//       }
+
+      
+//       const updated = TabHookStorage.updateValue(details.tabId, details.url);
+//       if (typeof updated === 'undefined') {
+//         return
+//       }
+
+//       console.log(`${event} updating to about:blank`)
+//       await chrome.tabs.update(details.tabId, { url: 'about:blank' });
+//     },
+//     {
+//       url: [
+//         {
+//           hostSuffix: 'aws.amazon.com', // TODO
+//         },
+//       ],
+//     },
+//   );
+// });
+
+// chrome.webRequest.onBeforeSendHeaders.addListener(
+//   async (details) => {
+//     if (details.frameType !== 'outermost_frame') {
+//       return;
+//     }
+
+//     console.log(`chrome.webRequest.onBeforeSendHeaders`, details);
+
+//     // if (TabHookStorage.isPaused(details.tabId)) {
+//     //   return;
+//     // }
+
+//     const tabId = TabHookStorage.cookieTabForTabId(details.tabId)
+//     if (typeof tabId === 'undefined') {
+//       return;
+//     }
+
+//     const cookieJar = await CookieJarStorage.getCookieJarFromTabId(tabId);
+//     if (cookieJar.length() === 0) {
+//       TabHookStorage.resumeTabNavigation(details.id)
+//       return;
+//     }
+
+//       const updated = TabHookStorage.updateValue(details.tabId, details.url);
+//       if (typeof updated === 'undefined') {
+//         return
+//       }
+//       console.log(`onBeforeSendHeaders updating to about:blank`)
+//     await chrome.tabs.update(details.tabId, { url: 'about:blank' });
+//   },
+//     {
+//     types: ['main_frame'],
+//     urls: [INTERCEPT_URL],
+//   },
+// );
 
 // TODO
 // onSendHeaders seems to be the earliest point in the lifecycle that this can work
@@ -147,18 +206,19 @@ chrome.tabs.onRemoved.addListener(CookieJarStorage.removeTabId);
 chrome.webRequest.onHeadersReceived.addListener(
   async (details) => {
     const cookies = [];
-    let location, isRedirect;
+    // let location, isRedirect;
     for (const header of details.responseHeaders) {
-      const headerName = header.name.toLowerCase();
-      if (headerName === 'set-cookie') {
+      // const headerName = ;
+      if (header.name.toLowerCase() === 'set-cookie') {
         // In Chrome every set-cookie header is a separate array entry in details.responseHeaders
         // In Firefox there is a single set-cookie header, with all values joined together with newlines
         for (const cookieHeaderValue of header.value.split('\n')) {
           cookies.push(new Cookie(cookieHeaderValue, details.url));
         }
-      } else if (headerName === 'location') {
-        location = header.value;
       }
+      // } else if (headerName === 'location') {
+      //   location = header.value;
+      // }
     }
 
     // If we got no cookies in this request, return immediately
@@ -173,29 +233,45 @@ chrome.webRequest.onHeadersReceived.addListener(
     // TODO can just use details.tabId below
     const tabId = details.tabId;
 
+    const url = new URL(details.url);
+    console.log('onHeadersReceived', details, url);
+    if (details.statusCode === 401 && details.frameType === 'outermost_frame' && details.method === 'GET' && details.initiator === 'https://signin.aws.amazon.com' && details.type === 'main_frame' && 
+      url.hostname === 'console.aws.amazon.com' && url.pathname === '/console/home' && url.searchParams.get('code') !== null) {
+        console.log('reloading')
+        chrome.tabs.update(tabId, { url: details.url} );
+      }
+    
+
     // If we got a redirect response with Set-Cookie headers, the tab will follow the redirect before our updated rules get saved
     // Work around this by updating the tab to go to about:blank until the rules get updated, at which point we go back to the original url
     // let promise, resolve;
-    if (
-      details.frameType === 'outermost_frame' &&
-      details.type === 'main_frame' &&
-      details.method === 'GET' &&
-      (details.statusCode === 301 || details.statusCode === 302)
-    ) {
-      console.log('onHeadersReceived with redirect, updating to about:blank', details);
-      // TODO dry up with the above / move into storage
-      // Also rename openerTabId to tabId
-      isRedirect = true;
-      await chrome.tabs.update(tabId, { url: 'about:blank' });
-    }
+    // if (
+    //   details.frameType === 'outermost_frame' &&
+    //   details.type === 'main_frame' &&
+    //   details.method === 'GET' &&
+    //   (details.statusCode === 301 || details.statusCode === 302)
+    // ) {
+    //   console.log('onHeadersReceived with redirect, updating to about:blank', details);
+    //   // TODO dry up with the above / move into storage
+    //   // Also rename openerTabId to tabId
+    //   isRedirect = true;
+    //   await chrome.tabs.update(tabId, { url: 'about:blank' });
+    // }
 
+    // console.log('onHeadersReceived with cookies, pausing tab', details);
+    // TabHookStorage.pauseTabNavigation(tabId, tabId)
     const [tabIds, cookieJar] = await CookieJarStorage.addCookiesToJar(tabId, cookies, details.url, false);
+    // TabHookStorage.pauseTabNavigation(tabId, tabId)
     await updateSessionRules(cookieJar, tabIds);
-
-    if (isRedirect === true) {
-      console.log('onHeadersReceived with redirect, updating url to ', location)
-      await chrome.tabs.update(tabId, { url: location });
-    }
+    // const url = TabHookStorage.resumeTabNavigation(tabId)
+    // console.log('onHeadersReceived with cookies, resuming tab', url)
+    // if (typeof url !== 'undefined') {
+      // await chrome.tabs.update(tabId, { url });
+    // }
+    // if (isRedirect === true) {
+    //   console.log('onHeadersReceived with redirect, updating url to ', location)
+    //   await chrome.tabs.update(tabId, { url: location });
+    // }
   },
   {
     types: RESOURCE_TYPES,
@@ -222,10 +298,15 @@ chrome.webRequest.onHeadersReceived.addListener(
       const cookieJar = await CookieJarStorage.getCookieJarFromTabId(tab.id);
       const tabUrl = new URL(tab.url);
       const matching = cookieJar.matching({ domain: tabUrl.hostname, httponly: false, path: tabUrl.pathname });
+      
+      // Ignore "Error: Could not establish connection. Receiving end does not exist." errors
+      // This can happen if the tab sends us this message but then redirects/navigates away and has no
+      // listener by the time we process this message. This is safe to ignore, the new page navigation
+      // will request cookies once it loads
       chrome.tabs.sendMessage(tab.id, {
         cookies: cookieHeader(matching),
         masType: CMD_INJECT_COOKIES,
-      });
+      }).catch(() => {});
     },
     [CMD_PARSE_NEW_COOKIE]: async (message, tab) => {
       const [tabIds, cookieJar] = await CookieJarStorage.addCookiesToJar(tab.id, [message.cookies], tab.url, true);

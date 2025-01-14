@@ -130,16 +130,17 @@ chrome.webRequest.onHeadersReceived.addListener(
       const tabUrl = new URL(tab.url);
       const matching = cookieJar.matching({ domain: tabUrl.hostname, httponly: false, path: tabUrl.pathname });
 
-      // Ignore "Error: Could not establish connection. Receiving end does not exist." errors
-      // This can happen if the tab sends us this message but then navigates away and has no
-      // listener by the time we process this message. This is safe to ignore, the new page navigation
-      // will request cookies once it loads
       chrome.tabs
         .sendMessage(tab.id, {
           cookies: cookieHeader(matching),
           masType: CMD_INJECT_COOKIES,
         })
-        .catch(() => {/* Do nothing */});
+        .catch(() => {
+          // Ignore "Error: Could not establish connection. Receiving end does not exist." errors
+          // This can happen if the tab sends us this message but then navigates away and has no
+          // listener by the time we process this message. This is safe to ignore, the new page navigation
+          // will request cookies once it loads
+        });
     },
     [CMD_PARSE_NEW_COOKIE]: async (message, tab) => {
       const [tabIds, cookieJar] = await CookieJarStorage.addCookiesToJar(tab.id, [message.cookies], tab.url, true);

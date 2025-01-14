@@ -3,7 +3,7 @@
   "version": "0.0.8",
   "description": "__MSG_appDesc__",
   "default_locale": "en_US",
-  "permissions": ["alarms", "declarativeNetRequest", "storage", "webRequest"],
+  "permissions": ["declarativeNetRequest", "storage", "webNavigation", "webRequest"],
   "background": {
     <% if (target === 'firefox') { %>
       "scripts": ["dist/background.js"]

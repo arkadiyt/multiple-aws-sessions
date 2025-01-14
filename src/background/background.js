@@ -42,7 +42,7 @@ const updateSessionRules = (cookieJar, tabIds) => {
 
 // If a new tab is opened from a tab we're hooking, make sure the new tab gets the same cookies as the existing tab
 chrome.tabs.onCreated.addListener(async (details) => {
-  // TODO need to add the tabRulesUpdated stuff back in, for when opening new links 
+  // TODO need to add the tabRulesUpdated stuff back in, for when opening new links
   const openerTabId =
     typeof details.pendingUrl === 'undefined' && details.status !== 'complete' ? void 0 : details.openerTabId;
 

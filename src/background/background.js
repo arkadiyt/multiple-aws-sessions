@@ -119,7 +119,7 @@ chrome.webRequest.onHeadersReceived.addListener(
     if (details.initiator || details.originUrl) {
       const initiator = new URL(details.initiator || details.originUrl);
       // Ugly hack :(
-      // Sign in gives a 401 sometimes due to a race condition, and reloading the page fixes it
+      // Root user sign-in gives a 401 sometimes due to a race condition, and reloading the page fixes it
       // TODO find a more elegant solution
       if (
         details.statusCode === 401 &&

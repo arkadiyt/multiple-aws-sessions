@@ -40,9 +40,12 @@ const updateSessionRules = (cookieJar, tabIds) => {
   return Promise.all([updateSessionRulesLock, sendUpdatedCookiesToTabs(cookieJar, tabIds)]);
 };
 
+// TODO cleanup/refactor
+const tabRulesUpdated = {};
 // If a new tab is opened from a tab we're hooking, make sure the new tab gets the same cookies as the existing tab
 chrome.tabs.onCreated.addListener(async (details) => {
-  // TODO need to add the tabRulesUpdated stuff back in, for when opening new links
+  const { promise, resolve } = Promise.withResolvers();
+  tabRulesUpdated[details.id] = { openerTabId: details.openerTabId, resolve };
   const openerTabId =
     typeof details.pendingUrl === 'undefined' && details.status !== 'complete' ? void 0 : details.openerTabId;
 
@@ -58,7 +61,34 @@ chrome.tabs.onCreated.addListener(async (details) => {
   }
 
   await updateSessionRules(cookieJar, tabIds);
+  const url = await promise;
+  await chrome.tabs.update(details.id, { url });
 });
+
+// TODO
+// onSendHeaders seems to be the earliest point in the lifecycle that this can work
+// add more detailed comment / diagrams
+// could consider hooking all and seeing which ones fires first, that seems safe
+chrome.webRequest.onBeforeSendHeaders.addListener(
+  async (details) => {
+    if (details.parentFrameId === -1 && Object.hasOwn(tabRulesUpdated, details.tabId)) {
+      const { resolve, openerTabId } = tabRulesUpdated[details.tabId];
+      delete tabRulesUpdated[details.tabId];
+
+      const cookieJar = await CookieJarStorage.getCookieJarFromTabId(openerTabId);
+      if (cookieJar.length() === 0) {
+        return;
+      }
+
+      await chrome.tabs.update(details.tabId, { url: 'about:blank' });
+      resolve(details.url);
+    }
+  },
+  {
+    types: ['main_frame'],
+    urls: [INTERCEPT_URL],
+  },
+);
 
 // This does not update any session rules, only removes storage
 chrome.tabs.onRemoved.addListener(CookieJarStorage.removeTabId);
@@ -81,27 +111,29 @@ chrome.webRequest.onHeadersReceived.addListener(
       return;
     }
 
-    const url = new URL(details.url);
-    // Chrome sets initiator, Firefox sets originUrl
-    const initiator = new URL(details.initiator || details.originUrl);
-    // Ugly hack :(
-    // Sign in gives a 401 sometimes due to a race condition, and reloading the page fixes it
-    // TODO find a more elegant solution
-    if (
-      details.statusCode === 401 &&
-      details.parentFrameId === -1 &&
-      details.method === 'GET' &&
-      initiator.hostname === 'signin.aws.amazon.com' &&
-      details.type === 'main_frame' &&
-      url.hostname === 'console.aws.amazon.com' &&
-      url.pathname === '/console/home' &&
-      url.searchParams.get('code') !== null
-    ) {
-      chrome.tabs.update(details.tabId, { url: details.url });
-    }
-
     const [tabIds, cookieJar] = await CookieJarStorage.addCookiesToJar(details.tabId, cookies, details.url, false);
     await updateSessionRules(cookieJar, tabIds);
+
+    const url = new URL(details.url);
+    // Chrome sets initiator, Firefox sets originUrl
+    if (details.initiator || details.originUrl) {
+      const initiator = new URL(details.initiator || details.originUrl);
+      // Ugly hack :(
+      // Sign in gives a 401 sometimes due to a race condition, and reloading the page fixes it
+      // TODO find a more elegant solution
+      if (
+        details.statusCode === 401 &&
+        details.parentFrameId === -1 &&
+        details.method === 'GET' &&
+        initiator.hostname === 'signin.aws.amazon.com' &&
+        details.type === 'main_frame' &&
+        url.hostname === 'console.aws.amazon.com' &&
+        url.pathname === '/console/home' &&
+        url.searchParams.get('code') !== null
+      ) {
+        chrome.tabs.update(details.tabId, { url: details.url });
+      }
+    }
   },
   {
     types: RESOURCE_TYPES,

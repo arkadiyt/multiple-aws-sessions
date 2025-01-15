@@ -6,7 +6,7 @@ import { CMD_LOADED, CMD_PARSE_NEW_COOKIE } from 'shared.js';
 (() => {
   // Promise for when main world script is ready to handle messages
   const { promise, resolve } = Promise.withResolvers();
-  let scriptLoaded;
+  let scriptLoaded = false;
   // Inject a script that runs in the main world / has access to hook document.cookie
   const script = document.createElement('script');
   script.src = chrome.runtime.getURL('dist/content_script_main.js');

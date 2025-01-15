@@ -19,9 +19,9 @@ This extension removes this restriction, and allows you to transparently sign in
 #### From webstores:
 
 - [Chrome](https://chromewebstore.google.com/detail/multiple-aws-sessions/ehffbdpahpebdgpmnecccpfmbokeohop)
-- [Firefox]()
-- [Edge]()
-- [Opera]()
+- [Firefox](TODO)
+- [Edge](TODO)
+- [Opera](TODO confirm https://addons.opera.com/en/extensions/details/multiple-aws-sessions/)
 
 #### From source:
 
@@ -46,7 +46,6 @@ See this blog post:
 
 Here are the permissions used by multiple-aws-sessions and why it requests them. See also [PRIVACY.md](https://github.com/arkadiyt/multiple-aws-sessions/blob/main/PRIVACY.md).
 
-- `alarms`: This is used to run some cleanup timers once per minute
 - `declarativeNetRequest`: This is used to write rules that determine which cookies get sent with requests from different AWS tabs. It is the heart of this extension
 - `storage`: This is used to store cookies and various bookkeeping settings
 - `webRequest`: This is used to keep track of which requests are coming from which tabs

@@ -18,12 +18,6 @@ export default [
   },
   {
     files: ['test/**/*'],
-    languageOptions: {
-      globals: {
-        ...globals.node,
-        ...globals.jest,
-      },
-    },
     plugins: { jest: pluginJest },
     ...pluginJest.configs['flat/all'],
   },
@@ -70,6 +64,11 @@ export default [
   },
   {
     files: ['test/**/*'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+      },
+    },
     rules: {
       'jest/max-expects': 'off',
       'jest/no-conditional-in-test': 'off',

@@ -1,5 +1,7 @@
 {
+  "collectCoverage": true,
+  "collectCoverageFrom": ["src/**/*.js"],
   "errorOnDeprecated": true,
-  "randomize": true,
-  "modulePaths": ["src"]
+  "modulePaths": ["src"],
+  "randomize": true
 }

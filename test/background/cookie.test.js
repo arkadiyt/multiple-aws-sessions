@@ -53,11 +53,11 @@ describe('cookie', () => {
   it('has a correct default path', () => {
     expect.hasAssertions();
 
-    const httpCookie = new Cookie(cs('a', 'b', {}), 'https://example.com/path', false);
+    const httpCookie = new Cookie(cs('a', 'b', {}), 'https://example.com/path', true);
 
     expect(httpCookie.path).toBe('/path');
 
-    const javascriptCookie = new Cookie(cs('a', 'b', {}), 'https://example.com/path', true);
+    const javascriptCookie = new Cookie(cs('a', 'b', {}), 'https://example.com/path', false);
 
     expect(javascriptCookie.path).toBe('/');
   });

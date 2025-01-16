@@ -6,11 +6,11 @@
  */
 
 export class Cookie {
-  constructor(cookieStr, requestUrl, fromJavascript) {
-    this.parse(cookieStr, requestUrl, fromJavascript);
+  constructor(cookieStr, requestUrl, fromHttp) {
+    this.parse(cookieStr, requestUrl, fromHttp);
   }
 
-  parse(cookieStr, requestUrl, fromJavascript) {
+  parse(cookieStr, requestUrl, fromHttp) {
     const parts = cookieStr.split(';').filter((str) => str !== '');
     try {
       [, this.name, this.value] = parts.shift().match(/([^=]+)=(.*)/u);
@@ -18,7 +18,7 @@ export class Cookie {
       throw new Error('Invalid cookie header');
     }
 
-    this.setDefaults(requestUrl, fromJavascript);
+    this.setDefaults(requestUrl, fromHttp);
 
     for (const part of parts) {
       const [, key, val] = part.match(/([^=]+)(?:=(.*))?/u);
@@ -70,7 +70,7 @@ export class Cookie {
     }
   }
 
-  setDefaults(requestUrl, fromJavascript) {
+  setDefaults(requestUrl, fromHttp) {
     const url = new URL(requestUrl);
 
     this.httponly = false;
@@ -78,13 +78,13 @@ export class Cookie {
     this.maxage = void 0;
     // If path is omitted from a Set-Cookie header, the path defaults to the current directory (https://www.rfc-editor.org/rfc/rfc6265#section-4.1.2.4)
     // However if path is omitted from a cookie added via document.cookie, the path defaults to /
-    if (fromJavascript === true) {
-      this.path = '/';
-    } else {
+    if (fromHttp === true) {
       this.path =
         typeof url.pathname === 'undefined' || url.pathname === '/' || !url.pathname.startsWith('/')
           ? '/'
           : url.pathname.replace(/\/$/u, '');
+    } else {
+      this.path = '/';
     }
     this.pathSpecified = false;
     this.domain = url.hostname;

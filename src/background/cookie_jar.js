@@ -6,14 +6,13 @@ const pathMatch = (cookie, path) =>
   cookie.path === path ||
   (path.startsWith(cookie.path) && (cookie.path.slice(-1) === '/' || path[cookie.path.length] === '/'));
 
-// TODO replace fromJavascript to fromHttp to make it a safer default
 export class CookieJar {
   constructor() {
     this.cookies = [];
   }
-  upsertCookie(cookie, requestUrl, fromJavascript) {
+  upsertCookie(cookie, requestUrl, fromHttp) {
     if (typeof cookie === 'string') {
-      this.upsertCookie(new Cookie(cookie, requestUrl, fromJavascript), requestUrl, fromJavascript);
+      this.upsertCookie(new Cookie(cookie, requestUrl, fromHttp), requestUrl, fromHttp);
       return;
     }
 
@@ -56,12 +55,12 @@ export class CookieJar {
       return;
     }
 
-    if (fromJavascript === true && cookie.httponly !== false) {
+    if (fromHttp !== true && cookie.httponly !== false) {
       // Cookies set from javascript can't be httpOnly cookies
       return;
     }
 
-    if (fromJavascript === true && !pathMatch(cookie, url.pathname)) {
+    if (fromHttp !== true && !pathMatch(cookie, url.pathname)) {
       // Cookies set from javascript must be for their own path or a prefix of it, only server-set cookies can have arbitrary paths
       return;
     }
@@ -72,7 +71,7 @@ export class CookieJar {
     );
     const shouldDelete = cookie.value === '' || cookie.expired();
     if (index !== -1) {
-      if (fromJavascript === true && this.cookies[index].httponly === true) {
+      if (fromHttp !== true && this.cookies[index].httponly === true) {
         // Don't allow updating or deleting httponly cookies from javascript
         return;
       }
@@ -89,9 +88,9 @@ export class CookieJar {
     }
   }
 
-  upsertCookies(cookies, requestUrl, fromJavascript) {
+  upsertCookies(cookies, requestUrl, fromHttp) {
     for (const cookie of cookies) {
-      this.upsertCookie(cookie, requestUrl, fromJavascript);
+      this.upsertCookie(cookie, requestUrl, fromHttp);
     }
   }
 

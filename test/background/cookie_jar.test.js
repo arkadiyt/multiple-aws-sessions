@@ -52,7 +52,7 @@ describe('cookiejar', () => {
       [cs('a', 'b', { path: '/item/' }), 'http://example.com/item/', '/item/'],
     ].forEach(([cookie, requestUrl, expectedPath]) => {
       const cookieJar = new CookieJar();
-      cookieJar.upsertCookie(new Cookie(cookie, requestUrl, true), requestUrl, true);
+      cookieJar.upsertCookie(new Cookie(cookie, requestUrl), requestUrl);
 
       const cookies = cookieJar.getCookies();
 
@@ -73,7 +73,7 @@ describe('cookiejar', () => {
       [cs('a', 'b', { path: '/item/asd' }), 'http://example.com/item/'],
     ].forEach(([cookie, requestUrl]) => {
       const cookieJar = new CookieJar();
-      cookieJar.upsertCookie(new Cookie(cookie, requestUrl, true), requestUrl, true);
+      cookieJar.upsertCookie(new Cookie(cookie, requestUrl), requestUrl);
 
       expect(cookieJar.getCookies()).toHaveLength(0);
     });
@@ -83,8 +83,8 @@ describe('cookiejar', () => {
     expect.hasAssertions();
 
     const cookieJar = new CookieJar();
-    cookieJar.upsertCookie(cs('a', 'b', { httponly: true }), 'https://example.com', false);
-    cookieJar.upsertCookie(cs('a', 'c', {}), 'https://example.com', true);
+    cookieJar.upsertCookie(cs('a', 'b', { httponly: true }), 'https://example.com', true);
+    cookieJar.upsertCookie(cs('a', 'c', {}), 'https://example.com');
 
     expect(cookieJar.getCookies()[0].value).toBe('b');
   });
@@ -170,6 +170,7 @@ describe('cookiejar', () => {
         cs('j', '1', { httponly: true, path: '/path4' }),
       ],
       'https://sub1.sub2.example.com/path2',
+      true,
     );
 
     [

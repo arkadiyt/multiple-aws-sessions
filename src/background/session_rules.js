@@ -56,16 +56,30 @@ const rule = (cookie, tabIds, id, priority) => ({
   priority,
 });
 
+// const getUnusedRuleIds = (num, ruleIds, ruleIdsToRemove) => {
+//   if (ruleIdsToRemove.length <= num) {
+//     return ruleIdsToRemove.slice(0, num);
+//   }
+
+//   const start = Math.floor(Math.random() * MAX_RULE_ID);
+//   for (let i = num - ruleIdsToRemove.length; i < num;) {
+
+//   }
+// }
+
+// TODO add tests for this
 export const sessionRulesFromCookieJar = (cookieJar, tabIds, ruleIdStart) => {
   const cookies = cookieJar.getCookies();
   const rules = [];
 
+  // TODO for cookies with identical conditions (regex, samesite), collapse into a single rule
+
   for (const cookie of cookies) {
     rules.push(rule(cookie, tabIds, ruleIdStart + rules.length + 1, rules.length + 1));
 
+    // TODO this breaks stuff
     // if (cookie.samesite === 'strict') {
     //   rules[rules.length - 1].condition.initiatorDomains = [psl.parse(cookie.domain).domain];
-    // }
     // } else if (cookie.samesite === 'lax') {
     //   rules[rules.length - 1].condition.initiatorDomains = [psl.parse(cookie.domain).domain];
     //   rules[rules.length - 1].condition.requestMethods = ['connect', 'delete', 'patch', 'post', 'put', 'other'];

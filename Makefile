@@ -1,4 +1,7 @@
-.PHONY: test lint lintfix fmt webpack clean build
+.PHONY: test lint lintfix fmt webpack clean build selenium
+
+build:
+	./scripts/build.sh
 
 clean:
 	rm -rf dist/* build/*
@@ -7,8 +10,11 @@ webpack:
 	npx webpack --watch
 
 test:
-	NODE_OPTIONS="--experimental-vm-modules" npx jest
+	NODE_OPTIONS="--experimental-vm-modules" npx jest test/background
 
+selenium:
+	./scripts/selenium.sh
+	
 lint:
 	npx eslint
 
@@ -17,6 +23,3 @@ lintfix:
 
 fmt:
 	npx prettier . --write
-
-build:
-	./scripts/build.sh

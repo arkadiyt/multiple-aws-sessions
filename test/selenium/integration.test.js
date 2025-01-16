@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { Builder, By, Key, until, Capabilities } from 'selenium-webdriver';
+import { Builder, By, Key, until } from 'selenium-webdriver';
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { TOTP } from 'totp-generator';
 import chrome from 'selenium-webdriver/chrome';

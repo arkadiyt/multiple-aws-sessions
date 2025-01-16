@@ -89,10 +89,10 @@ describe('selenium', () => {
   };
 
   const sessionData = async () => {
-    const data = await driver.findElement(By.name('awsc-session-data'))
-    const content = await data.getProperty('content')
+    const data = await driver.findElement(By.name('awsc-session-data'));
+    const content = await data.getProperty('content');
     return JSON.parse(content);
-  }
+  };
 
   it('works end-to-end', async () => {
     expect.hasAssertions();
@@ -107,9 +107,9 @@ describe('selenium', () => {
     // After clearing all cookies and refreshing we should still be logged in
     await driver.manage().deleteAllCookies();
     await driver.navigate().refresh();
-    
+
     const session = await sessionData();
 
-    expect(session.accountId).toBe(process.env.AWS_ACCOUNT_ID)
+    expect(session.accountId).toBe(process.env.AWS_ACCOUNT_ID);
   });
 });

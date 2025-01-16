@@ -48,7 +48,7 @@ Here are the permissions used by multiple-aws-sessions and why it requests them.
 
 - `declarativeNetRequest`: This is used to write rules that determine which cookies get sent with requests from different AWS tabs. It is the heart of this extension
 - `storage`: This is used to store cookies and various bookkeeping settings
-- `webRequest`: This is used to keep track of which requests are coming from which tabs
+- `webRequest`: This is used to hook Set-Cookie response headers from AWS
 - Host permissions for `*://*.aws.amazon.com/*`: This is needed to receive access to Set-Cookie response headers from AWS
 
 ### Security

@@ -8,13 +8,11 @@ import firefox from 'selenium-webdriver/firefox';
 import { globSync } from 'node:fs';
 
 // TODO get coverage working with jest+selenium
-
-// TODO loop over all targets (if non provided)
+// Merge coverage like https://stackoverflow.com/questions/62560224/jest-how-to-merge-coverage-reports-from-different-jest-test-runs
 
 /**
  * Test cases:
  * - maybe setup new AWS accounts for this?
-
  * - assumerolewithsaml
  * - login profile
  * - however it is that aws-vault signs in
@@ -90,6 +88,12 @@ describe('selenium', () => {
     await driver.findElement(By.id('mfa_submit_button')).click();
   };
 
+  const sessionData = async () => {
+    const data = await driver.findElement(By.name('awsc-session-data'))
+    const content = await data.getProperty('content')
+    return JSON.parse(content);
+  }
+
   it('works end-to-end', async () => {
     expect.hasAssertions();
 
@@ -99,14 +103,13 @@ describe('selenium', () => {
       TOTP.generate(process.env.AWS_ROOT_TOTP).otp,
     );
 
-    // TODO wait until elm is visible
     await sleep(3000);
-    await driver.get(
-      'https://us-east-1.console.aws.amazon.com/billing/home?region=us-east-1&state=hashArgs%23%2Fbills#/bills',
-    );
+    // After clearing all cookies and refreshing we should still be logged in
+    await driver.manage().deleteAllCookies();
+    await driver.navigate().refresh();
+    
+    const session = await sessionData();
 
-    // This is actually failing right now!
-
-    await sleep(180000);
+    expect(session.accountId).toBe(process.env.AWS_ACCOUNT_ID)
   });
 });

@@ -4,7 +4,7 @@ build:
 	./scripts/build.sh
 
 clean:
-	rm -rf dist/* build/*
+	rm -rf dist/* build/* coverage/*
 
 webpack:
 	npx webpack --watch

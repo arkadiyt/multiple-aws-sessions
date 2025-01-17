@@ -5,5 +5,4 @@
  * It faciliates coverage instrumentation when executing in a selenium environment
  */
 
-
 // TODO hook window.__coverage__ to use local storage

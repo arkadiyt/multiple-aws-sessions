@@ -1,3 +1,4 @@
+import 'selenium/main.js';
 import { CMD_INJECT_COOKIES, CMD_PARSE_NEW_COOKIE } from 'shared.js';
 
 (() => {

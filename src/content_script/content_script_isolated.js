@@ -1,3 +1,4 @@
+import 'selenium/isolated.js';
 import { CMD_LOADED, CMD_PARSE_NEW_COOKIE } from 'shared.js';
 
 /**

@@ -1,4 +1,4 @@
-.PHONY: test lint lintfix fmt webpack clean build selenium
+.PHONY: test lint lintfix fmt webpack clean build selenium coverage
 
 build:
 	./scripts/build.sh
@@ -23,3 +23,6 @@ lintfix:
 
 fmt:
 	npx prettier . --write
+
+coverage:
+	npx nyc -t coverage --reporter html --reporter text --report-dir coverage/summary report

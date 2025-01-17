@@ -1,14 +1,12 @@
 import 'dotenv/config';
 import { Builder, By, Key, until } from 'selenium-webdriver';
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
+import { globSync, writeFileSync } from 'node:fs';
+import { CMD_COVERAGE } from 'shared.js';
 import { TOTP } from 'totp-generator';
 import chrome from 'selenium-webdriver/chrome';
 import edge from 'selenium-webdriver/edge';
 import firefox from 'selenium-webdriver/firefox';
-import { globSync } from 'node:fs';
-
-// TODO get coverage working with jest+selenium
-// Merge coverage like https://stackoverflow.com/questions/62560224/jest-how-to-merge-coverage-reports-from-different-jest-test-runs
 
 /**
  * Test cases:
@@ -55,7 +53,38 @@ describe('selenium', () => {
 
   afterAll(async () => {
     if (driver !== null) {
-      await driver.quit();
+      // Fetch the test coverage data before we quit
+      try {
+        const mainCoverage = await driver.executeScript('return window.__coverage__;');
+        writeFileSync(`coverage/coverage-${process.env.SELENIUM_BROWSER}-main.json`, JSON.stringify(mainCoverage));
+
+        const { isolatedCoverage, backgroundCoverage } = await driver.executeScript(`
+          return new Promise((resolve) => {
+            window.addEventListener('message', (event) => {
+              if (event.source !== window) {
+                return;
+              }
+
+              if (event.data.masType !== '${CMD_COVERAGE}' || !Object.hasOwn(event.data, 'isolatedCoverage')) {
+                return;
+              }
+
+              resolve(event.data);
+            });
+            postMessage({ masType: '${CMD_COVERAGE}' });
+          });
+        `);
+        writeFileSync(
+          `coverage/coverage-${process.env.SELENIUM_BROWSER}-isolated.json`,
+          JSON.stringify(isolatedCoverage),
+        );
+        writeFileSync(
+          `coverage/coverage-${process.env.SELENIUM_BROWSER}-background.json`,
+          JSON.stringify(backgroundCoverage),
+        );
+      } finally {
+        await driver.quit();
+      }
     }
   });
 

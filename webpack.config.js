@@ -1,4 +1,5 @@
 import path from 'node:path';
+import webpack from 'webpack';
 
 export default {
   // Generate source maps when building for Selenium
@@ -16,17 +17,22 @@ export default {
   resolve: {
     modules: [path.resolve('src'), 'node_modules'],
   },
-  // Use istanbul to generate coverage data when building for Selenium
   ...(process.env.SELENIUM && {
+    // Use istanbul to generate coverage data when building for Selenium
     module: {
       rules: [
         {
-          test: /\.js$/,
+          test: /\.js$/u,
           use: {
             loader: 'babel-loader',
           },
         },
       ],
     },
+  }),
+  ...(!process.env.SELENIUM && {
+    // There is some coverage instrumentation code under src/selenium/
+    // When we're _not_ building for Selenium, replace any 'selenium/*.js' imports with an empty file
+    plugins: [new webpack.NormalModuleReplacementPlugin(/src\/selenium\/.*\.js$/u, 'empty.js')],
   }),
 };

@@ -1,4 +1,4 @@
-.PHONY: test lint lintfix fmt webpack clean build selenium
+.PHONY: test lint lintfix fmt webpack clean build selenium coverage
 
 build:
 	./scripts/build.sh
@@ -13,7 +13,6 @@ test:
 	NODE_OPTIONS="--experimental-vm-modules" npx jest test/background
 
 selenium:
-	# SELENIUM=1 ./scripts/build.sh
 	./scripts/selenium.sh
 	
 lint:
@@ -24,3 +23,6 @@ lintfix:
 
 fmt:
 	npx prettier . --write
+
+coverage:
+	npx nyc -t coverage --reporter html --reporter text --report-dir coverage/summary report

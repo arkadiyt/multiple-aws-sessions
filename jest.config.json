@@ -1,7 +1,9 @@
 {
   "collectCoverage": true,
   "collectCoverageFrom": ["src/**/*.js"],
+  "coverageReporters": ["json"],
   "errorOnDeprecated": true,
   "modulePaths": ["src"],
-  "randomize": true
+  "randomize": true,
+  "transform": {}
 }

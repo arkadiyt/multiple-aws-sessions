@@ -56,6 +56,7 @@ export default [
       'no-inline-comments': 'off',
       'no-magic-numbers': 'off',
       'no-ternary': 'off',
+      'no-underscore-dangle': 'off',
       'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
       'no-void': 'off',
       'one-var': ['error', 'never'],

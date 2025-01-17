@@ -1,0 +1,11 @@
+{
+  "plugins": [
+    [
+      "istanbul",
+      {
+        "coverageGlobalScope": "window",
+        "coverageGlobalScopeFunc": false
+      }
+    ]
+  ]
+}

@@ -13,6 +13,7 @@ test:
 	NODE_OPTIONS="--experimental-vm-modules" npx jest test/background
 
 selenium:
+	# SELENIUM=1 ./scripts/build.sh
 	./scripts/selenium.sh
 	
 lint:

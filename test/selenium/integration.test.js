@@ -2,7 +2,6 @@ import 'dotenv/config';
 import { Builder, By, Key, until } from 'selenium-webdriver';
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
 import { globSync, writeFileSync } from 'node:fs';
-import { CMD_COVERAGE } from 'shared.js';
 import { TOTP } from 'totp-generator';
 import chrome from 'selenium-webdriver/chrome';
 import edge from 'selenium-webdriver/edge';
@@ -52,39 +51,28 @@ describe('selenium', () => {
   });
 
   afterAll(async () => {
-    if (driver !== null) {
-      // Fetch the test coverage data before we quit
-      try {
-        const mainCoverage = await driver.executeScript('return window.__coverage__;');
-        writeFileSync(`coverage/coverage-${process.env.SELENIUM_BROWSER}-main.json`, JSON.stringify(mainCoverage));
+    if (driver === null) {
+      return;
+    }
 
-        const { isolatedCoverage, backgroundCoverage } = await driver.executeScript(`
-          return new Promise((resolve) => {
-            window.addEventListener('message', (event) => {
-              if (event.source !== window) {
-                return;
-              }
+    // Fetch the test coverage data before we quit
+    try {
+      const { mainCoverage, isolatedCoverage, backgroundCoverage } =
+        await driver.executeScript('return fetchCoverage();');
 
-              if (event.data.masType !== '${CMD_COVERAGE}' || !Object.hasOwn(event.data, 'isolatedCoverage')) {
-                return;
-              }
-
-              resolve(event.data);
-            });
-            postMessage({ masType: '${CMD_COVERAGE}' });
-          });
-        `);
-        writeFileSync(
-          `coverage/coverage-${process.env.SELENIUM_BROWSER}-isolated.json`,
-          JSON.stringify(isolatedCoverage),
-        );
-        writeFileSync(
-          `coverage/coverage-${process.env.SELENIUM_BROWSER}-background.json`,
-          JSON.stringify(backgroundCoverage),
-        );
-      } finally {
-        await driver.quit();
+      writeFileSync(
+        `coverage/coverage-${process.env.SELENIUM_BROWSER}-isolated.json`,
+        JSON.stringify(isolatedCoverage),
+      );
+      writeFileSync(
+        `coverage/coverage-${process.env.SELENIUM_BROWSER}-background.json`,
+        JSON.stringify(backgroundCoverage),
+      );
+      for (const [key, val] of Object.entries(mainCoverage)) {
+        writeFileSync(`coverage/coverage-${process.env.SELENIUM_BROWSER}-main-${key}.json`, JSON.stringify(val));
       }
+    } finally {
+      await driver.quit();
     }
   });
 

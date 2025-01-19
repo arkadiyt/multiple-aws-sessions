@@ -26,5 +26,3 @@ for TARGET in $TARGETS; do
 
   rm -rf "$WORK_DIR"
 done
-
-

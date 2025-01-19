@@ -19,7 +19,7 @@ const coveragePrefix = '__mas_coverage__';
 globalThis.__coverage__ = new Proxy(coverageObj, {
   set(...args) {
     const result = Reflect.set(...args);
-    localStorage.setItem(`${coveragePrefix}${uuid}`, JSON.stringify(coverageObj));
+    localStorage.setItem(coveragePrefix + uuid, JSON.stringify(coverageObj));
     return result;
   },
 });

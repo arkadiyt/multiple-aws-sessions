@@ -11,7 +11,7 @@ export const CLEAR_RULE = {
       {
         header: 'cookie',
         operation: 'set',
-        value: 'z=1', // Chrome allows an empty string but Firefox requires some value
+        value: ' ', // Chrome allows an empty string but Firefox requires some value
       },
     ],
     type: 'modifyHeaders',

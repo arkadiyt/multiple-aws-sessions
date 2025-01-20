@@ -22,7 +22,7 @@ export class CookieJarStorage {
     );
   };
 
-  static addCookiesToJar = async (tabId, cookies, requestUrl, fromJavascript) => {
+  static addCookiesToJar = async (tabId, cookies, requestUrl, fromHttp) => {
     const [tabs, tabsInverse] = await this.#getTabs();
     const cookieJarId = tabs[tabId];
     const cookieJarKey = `cookie_jar_${cookieJarId}`;
@@ -30,7 +30,7 @@ export class CookieJarStorage {
     return navigator.locks.request(cookieJarKey, async () => {
       const cookieJarDetails = await chrome.storage.session.get(cookieJarKey);
       const cookieJar = CookieJar.unmarshal(cookieJarDetails[cookieJarKey] || { cookies: [] });
-      cookieJar.upsertCookies(cookies, requestUrl, fromJavascript);
+      cookieJar.upsertCookies(cookies, requestUrl, fromHttp);
       await chrome.storage.session.set({
         [cookieJarKey]: cookieJar,
       });

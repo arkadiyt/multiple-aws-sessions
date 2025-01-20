@@ -97,13 +97,20 @@ chrome.tabs.onRemoved.addListener(CookieJarStorage.removeTabId);
 chrome.webRequest.onHeadersReceived.addListener(
   async (details) => {
     const cookies = [];
+    let location = void 0;
+    let isRedirect = void 0;
+
     for (const header of details.responseHeaders) {
-      if (header.name.toLowerCase() === 'set-cookie') {
+      const headerName = header.name.toLowerCase();
+
+      if (headerName === 'set-cookie') {
         // In Chrome every set-cookie header is a separate array entry in details.responseHeaders
         // In Firefox there is a single set-cookie header, with all values joined together with newlines
         for (const cookieHeaderValue of header.value.split('\n')) {
           cookies.push(new Cookie(cookieHeaderValue, details.url));
         }
+      } else if (headerName === 'location') {
+        location = header.value;
       }
     }
 
@@ -112,8 +119,24 @@ chrome.webRequest.onHeadersReceived.addListener(
       return;
     }
 
-    const [tabIds, cookieJar] = await CookieJarStorage.addCookiesToJar(details.tabId, cookies, details.url, false);
+    if (
+      details.parentFrameId === -1 &&
+      details.type === 'main_frame' &&
+      details.method === 'GET' &&
+      (details.statusCode === 301 || details.statusCode === 302)
+    ) {
+      // TODO dry up with the above / move into storage
+      isRedirect = true;
+      await chrome.tabs.update(details.tabId, { url: 'about:blank' });
+    }
+
+    const [tabIds, cookieJar] = await CookieJarStorage.addCookiesToJar(details.tabId, cookies, details.url, true);
     await updateSessionRules(cookieJar, tabIds);
+
+    if (isRedirect === true) {
+      await chrome.tabs.update(details.tabId, { url: location });
+      return;
+    }
 
     const url = new URL(details.url);
     // Chrome sets initiator, Firefox sets originUrl
@@ -175,7 +198,7 @@ chrome.webRequest.onHeadersReceived.addListener(
         });
     },
     [CMD_PARSE_NEW_COOKIE]: async (message, tab) => {
-      const [tabIds, cookieJar] = await CookieJarStorage.addCookiesToJar(tab.id, [message.cookies], tab.url, true);
+      const [tabIds, cookieJar] = await CookieJarStorage.addCookiesToJar(tab.id, [message.cookies], tab.url, false);
       await updateSessionRules(cookieJar, tabIds);
     },
   };

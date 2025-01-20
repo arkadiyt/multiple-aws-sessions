@@ -5,33 +5,19 @@
  * It faciliates coverage instrumentation when executing in a selenium environment
  */
 
+import { COVERAGE_PREFIX, hookCoverage } from 'selenium/hook_coverage.js';
 import { CMD_COVERAGE } from 'shared.js';
 
-// We don't want to lose the in-memory coverage data from the page when Selenium navigates the tab to a new page,
-// so this proxy object hooks writes to the window.__coverage__ object, does the original modification, and then writes
-// the entire object to local storage - then we can fetch it at a later time. But since localStorage is shared between
-// tabs this cause a problem, tabs will overwrite each others' coverage data, so have each tab generate a UUID and
-// store that page's storage to __mas_coverage__<uuid>
-const coverageObj = {};
-const uuid = crypto.randomUUID();
-const coveragePrefix = '__mas_coverage__';
-
-globalThis.__coverage__ = new Proxy(coverageObj, {
-  set(...args) {
-    const result = Reflect.set(...args);
-    localStorage.setItem(coveragePrefix + uuid, JSON.stringify(coverageObj));
-    return result;
-  },
-});
+hookCoverage();
 
 // This function is invoked from Selenium to pull all the coverage data from this main world content script,
 // the isolated world content script, and the background service worker
 const fetchCoverage = () => {
-  const mainCoverage = {};
+  const pageCoverage = {};
   for (let index = 0; index < localStorage.length; index += 1) {
     const key = localStorage.key(index);
-    if (key.startsWith(coveragePrefix)) {
-      mainCoverage[key.substring(coveragePrefix.length)] = localStorage.getItem(key);
+    if (key.startsWith(COVERAGE_PREFIX)) {
+      pageCoverage[key.substring(COVERAGE_PREFIX.length)] = JSON.parse(localStorage.getItem(key));
     }
   }
 
@@ -41,11 +27,11 @@ const fetchCoverage = () => {
         return;
       }
 
-      if (event.data.masType !== CMD_COVERAGE || !Object.hasOwn(event.data, 'isolatedCoverage')) {
+      if (event.data.masType !== CMD_COVERAGE || !Object.hasOwn(event.data, 'backgroundCoverage')) {
         return;
       }
 
-      resolve({ mainCoverage, ...event.data });
+      resolve({ pageCoverage, ...event.data });
     });
     postMessage({ masType: CMD_COVERAGE });
   });
@@ -53,3 +39,18 @@ const fetchCoverage = () => {
 
 // Define this globally so that Selenium can invoke it
 globalThis.fetchCoverage = fetchCoverage;
+
+// Helper functions for Selenium
+
+// "cmd+click" a link so it opens in a new tab
+const cmdClickLink = (link) => {
+  const mouseEvent = new MouseEvent('click', {
+    bubbles: true,
+    cancelable: true,
+    ctrlKey: true,
+    metaKey: true,
+  });
+  link.dispatchEvent(mouseEvent);
+};
+
+globalThis.cmdClickLink = cmdClickLink;

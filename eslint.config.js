@@ -50,7 +50,7 @@ export default [
       ],
       'complexity': ['error', 30],
       'max-lines-per-function': ['error', 100],
-      'max-params': ['error', 4],
+      'max-params': ['error', 5],
       'max-statements': ['error', 30],
       'no-console': ['error', { allow: ['warn', 'error'] }],
       'no-inline-comments': 'off',

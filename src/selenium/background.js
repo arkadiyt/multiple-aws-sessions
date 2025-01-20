@@ -26,7 +26,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 // Can't open the background page inspector window in Selenium, so send our logs to the content script
 ['log', 'warn', 'error'].forEach((method) => {
-  const original = console[method];
+  // eslint-disable-next-line no-console
+  const original = console[method].bind(console);
+  // eslint-disable-next-line no-console
   console[method] = (...args) => {
     const result = original(...args);
 

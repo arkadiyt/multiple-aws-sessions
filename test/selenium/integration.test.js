@@ -66,11 +66,9 @@ describe('selenium', () => {
       return;
     }
 
-    // TODO not getting content script coverage for some reason?
-
     // Fetch the test coverage data before we quit
     try {
-      const { pageCoverage, backgroundCoverage } = await driver.executeScript('return fetchCoverage();');
+      const { pageCoverage, backgroundCoverage } = await driver.executeScript('return _MAS.fetchCoverage();');
 
       writeFileSync(
         `coverage/coverage-${process.env.SELENIUM_BROWSER}-background.json`,
@@ -86,6 +84,17 @@ describe('selenium', () => {
       await driver.quit();
     }
   });
+
+  // eslint-disable-next-line id-length
+  const $ = async (selector, tree) => {
+    const search = typeof selector === 'string' ? By.css(selector) : selector;
+    // TODO
+    // Can only wait on top level but that might return the wrong element
+    // Could switch this to a javascript implementation
+    await driver.wait(until.elementLocated(search), 5000);
+    const webElement = typeof tree === 'undefined' ? driver : tree;
+    return webElement.findElement(search);
+  };
 
   const sleep = (milliseconds) =>
     new Promise((resolve) => {
@@ -141,24 +150,13 @@ describe('selenium', () => {
     url.searchParams.set('Action', 'getSigninToken');
     url.searchParams.set('Session', payload);
 
-    const result = await fetch(url, { method: 'POST' });
+    const result = await fetch(url);
     const signInToken = JSON.parse(await result.text()).SigninToken;
 
     url.searchParams.set('Action', 'login');
     url.searchParams.set('SigninToken', signInToken);
     url.searchParams.set('Destination', 'https://us-east-1.console.aws.amazon.com/console/home');
     await driver.get(url.href);
-  };
-
-  const $ = async (selector, tree) => {
-    if (typeof tree === 'undefined') {
-      tree = driver;
-    }
-    const search = typeof selector === 'string' ? By.css(selector) : selector;
-    // Can only wait on top level but that might return the wrong element
-    // Could switch this to a javascript implementation
-    await driver.wait(until.elementLocated(search), 5000);
-    return tree.findElement(search);
   };
 
   const sessionData = async () => {
@@ -171,7 +169,7 @@ describe('selenium', () => {
     }
   };
 
-  const cmdClickLink = (link) => driver.executeScript('cmdClickLink(arguments[0])', link);
+  const cmdClickLink = (link) => driver.executeScript('_MAS.cmdClickLink(arguments[0])', link);
 
   const newHandle = (existingHandles, newHandles) =>
     new Set(newHandles).difference(new Set(existingHandles)).values().next().value;
@@ -192,8 +190,6 @@ describe('selenium', () => {
       process.env.AWS_USER_MFA_SERIAL,
       TOTP.generate(process.env.AWS_USER_TOTP).otp,
     );
-
-    await sleep(5000);
 
     // Clear cookies and refresh, should still be logged in
     await driver.manage().deleteAllCookies();
@@ -273,7 +269,8 @@ describe('selenium', () => {
     await driver.switchTo().window(handles[0]);
   });
 
-  // it.todo('signs in using AssumeRoleWithSAML')
+  it.todo('signs in using AssumeRoleWithSAML');
+
   // it.todo('signs in using the root user', async () => {
   //   await loginAsRoot(
   //     process.env.AWS_ROOT_EMAIL,
@@ -291,5 +288,6 @@ describe('selenium', () => {
   //   console.log(session);
   //   expect(session.accountId).toBe(process.env.AWS_ACCOUNT_ID);
   // });
-  // it.todo('signs in using an IAM Login Profile');
+
+  it.todo('signs in using an IAM Login Profile');
 });

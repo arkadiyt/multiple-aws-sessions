@@ -10,8 +10,8 @@ import { CMD_COVERAGE } from 'shared.js';
 
 hookCoverage();
 
-// This function is invoked from Selenium to pull all the coverage data from this main world content script,
-// the isolated world content script, and the background service worker
+// Pull all the coverage data from this main world content script, the isolated world content script,
+// and the background service worker
 const fetchCoverage = () => {
   const pageCoverage = {};
   for (let index = 0; index < localStorage.length; index += 1) {
@@ -37,11 +37,6 @@ const fetchCoverage = () => {
   });
 };
 
-// Define this globally so that Selenium can invoke it
-globalThis.fetchCoverage = fetchCoverage;
-
-// Helper functions for Selenium
-
 // "cmd+click" a link so it opens in a new tab
 const cmdClickLink = (link) => {
   const mouseEvent = new MouseEvent('click', {
@@ -53,4 +48,8 @@ const cmdClickLink = (link) => {
   link.dispatchEvent(mouseEvent);
 };
 
-globalThis.cmdClickLink = cmdClickLink;
+// Make these global so Selenium can call them
+globalThis._MAS = {
+  cmdClickLink,
+  fetchCoverage,
+};

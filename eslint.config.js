@@ -74,6 +74,7 @@ export default [
       'jest/max-expects': 'off',
       'jest/no-conditional-in-test': 'off',
       'jest/no-hooks': 'off',
+      'max-lines': 'off',
       'max-lines-per-function': 'off',
     },
   },

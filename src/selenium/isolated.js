@@ -19,7 +19,7 @@ window.addEventListener('message', (event) => {
     return;
   }
 
-  chrome.runtime.sendMessage(chrome.runtime.id, event.data, (response) => {
+  chrome.runtime.sendMessage(event.data, (response) => {
     postMessage({
       backgroundCoverage: response,
       masType: CMD_COVERAGE,

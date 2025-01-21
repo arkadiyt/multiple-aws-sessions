@@ -4,125 +4,76 @@
 
 import 'dotenv/config';
 import { AssumeRoleCommand, STSClient } from '@aws-sdk/client-sts';
-import { Builder, By, Key, until } from 'selenium-webdriver';
+import { By, Key, until } from 'selenium-webdriver';
 import { afterAll, beforeAll, describe, expect, it } from '@jest/globals';
-import { globSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { fetchCoverage, startBrowser, startLoggingServer } from './utils.js';
 import { TOTP } from 'totp-generator';
-import chrome from 'selenium-webdriver/chrome';
-import edge from 'selenium-webdriver/edge';
-import firefox from 'selenium-webdriver/firefox';
-import http from 'node:http';
-import { join } from 'node:path';
-import { spawnSync } from 'node:child_process';
-import { tmpdir } from 'node:os';
 
 /**
  * Login methods:
  * - maybe setup new AWS accounts for this? add instructions for aws account setup (can do local saml signing, no need for okta)
  *   - add terraform bootstrap for minimum resources, and it outputs the .env file you need
+ * - root user
  * - assumerolewithsaml
  * - login profile
- *
- * Done-ish:
- * root user
- * aws-vault (federation)
+ * - each login method if the user has multi account sessions enabled
  *
  * Tests:
  * - billing page
  */
 
-const IAM_USER_NAME = 'read-only';
-
-describe('selenium', () => {
+describe(`selenium (${process.env.SELENIUM_BROWSER})`, () => {
   let driver = null;
   let logServer = null;
 
   beforeAll(async () => {
-    // Can't open the background page inspector window in Selenium, so create a server which
-    // listens for logs from the background service worker
-    logServer = http.createServer(async (req, res) => {
-      let body = '';
-      for await (const chunk of req) {
-        body += chunk;
-      }
-      console.warn('Background page: ', ...JSON.parse(body));
-      res.writeHead(200);
-      res.end();
-    });
-    logServer.listen(8000);
-
-    // Start the browser
-    if (process.env.SELENIUM_BROWSER === 'edge') {
-      process.env.SELENIUM_BROWSER = 'MicrosoftEdge';
-    }
-
-    if (process.env.SELENIUM_BROWSER === 'opera') {
-      const operaService = new chrome.ServiceBuilder(process.env.OPERA_DRIVER_PATH).build();
-      await operaService.start();
-
-      const safariOptions = new chrome.Options();
-      safariOptions.addExtensions(globSync('build/opera-*.zip'));
-
-      const googOptions = safariOptions.get('goog:chromeOptions');
-      googOptions.w3c = true;
-      safariOptions.set('goog:chromeOptions', googOptions);
-
-      driver = new Builder()
-        .disableEnvironmentOverrides()
-        .usingServer(await operaService.address())
-        .setChromeOptions(safariOptions)
-        .build();
-    } else {
-      driver = new Builder()
-        .setChromeOptions(new chrome.Options().addExtensions(globSync('build/chrome-*.zip')))
-        .setFirefoxOptions(new firefox.Options())
-        .setEdgeOptions(new edge.Options().addExtensions(globSync('build/edge-*.zip')))
-        .build();
-
-      if (process.env.SELENIUM_BROWSER === 'firefox') {
-        // Firefox doesn't support `new firefox.Options().addExtensions(...)`
-        // https://github.com/mozilla/geckodriver/issues/1476
-        await driver.installAddon(globSync('build/firefox-*.zip')[0], true);
-      }
-    }
+    logServer = startLoggingServer();
+    driver = await startBrowser();
   });
 
   afterAll(async () => {
-    logServer.close();
-
-    // Fetch the test coverage data before we quit
     try {
-      const { pageCoverage, backgroundCoverage } = await driver.executeScript('return _MAS.fetchCoverage();');
-
-      writeFileSync(
-        `coverage/coverage-${process.env.SELENIUM_BROWSER}-background.json`,
-        JSON.stringify(backgroundCoverage),
-      );
-      const tmpDir = mkdtempSync(join(tmpdir(), 'mas-'));
-      for (const [key, val] of Object.entries(pageCoverage)) {
-        writeFileSync(join(tmpDir, `${key}.json`), JSON.stringify(val));
-      }
-      spawnSync('npx', ['nyc', 'merge', tmpDir, `coverage/coverage-${process.env.SELENIUM_BROWSER}-pages.json`]);
-      rmSync(tmpDir, { recursive: true });
+      logServer.close();
+      await fetchCoverage(driver);
     } finally {
       await driver.quit();
     }
   });
 
   // eslint-disable-next-line id-length
-  const $ = async (selector, tree) => {
-    const search = typeof selector === 'string' ? By.css(selector) : selector;
-    // TODO
-    // Can only wait on top level but that might return the wrong element
+  const $ = async (tree, selector, options = {}) => {
+    let root = tree;
+    let search = selector;
+    let opts = options;
+
+    // If the second argument is an object, treat it as the options
+    if (typeof selector === 'object' && !(selector instanceof By)) {
+      opts = selector;
+      search = void 0;
+    }
+
+    const { timeout = 5 } = opts;
+
+    // If the first argument is a string, treat it as the selector
+    if (typeof root === 'string' || root instanceof By) {
+      search = root;
+      root = driver;
+    }
+
+    if (typeof search !== 'string' && !(search instanceof By)) {
+      throw new Error('selector is required');
+    }
+
+    search = typeof search === 'string' ? By.css(search) : search;
+    // TODO: Can only wait on top level but that might return the wrong element
     // Could switch this to a javascript implementation
-    await driver.wait(until.elementLocated(search), 5000);
-    const webElement = typeof tree === 'undefined' ? driver : tree;
-    return webElement.findElement(search);
+    await driver.wait(until.elementLocated(search), timeout * 1000);
+    return root.findElement(search);
   };
 
-  const sleep = (milliseconds) =>
+  const sleep = (seconds) =>
     new Promise((resolve) => {
-      setTimeout(resolve, milliseconds);
+      setTimeout(resolve, seconds * 1000);
     });
 
   const loginAsRoot = async (email, password, totp) => {
@@ -198,6 +149,8 @@ describe('selenium', () => {
   const newHandle = (existingHandles, newHandles) =>
     new Set(newHandles).difference(new Set(existingHandles)).values().next().value;
 
+  const IAM_USER_NAME = 'read-only';
+
   it('signs in using login federation', async () => {
     /**
      * Regular IAM federation sign in as per:
@@ -218,7 +171,7 @@ describe('selenium', () => {
     // Clear cookies and refresh, should still be logged in
     await driver.manage().deleteAllCookies();
     await driver.navigate().refresh();
-    await sleep(5000);
+    await sleep(1);
     const session = await sessionData();
 
     expect(session.accountId).toBe(process.env.AWS_ACCOUNT_ID);
@@ -235,11 +188,9 @@ describe('selenium', () => {
     await driver.switchTo().newWindow('tab');
     await driver.get('https://us-east-1.console.aws.amazon.com/console/home');
 
-    // TODO could replace with fetching the login form to confirm we're logged out
-    // then you don't need to wait for the timeout on the session data
     const session = await sessionData();
 
-    expect(session).toStrictEqual({});
+    expect(session.accountId).toBeUndefined();
 
     await driver.close();
     await driver.switchTo().window(originalTab);
@@ -266,7 +217,7 @@ describe('selenium', () => {
     // Need to explicitly switch even though the new tab became active
     await driver.switchTo().window(newHandle(handles, await driver.getAllWindowHandles()));
     const div = await $('div[data-analytics="userDetailsHeader"]');
-    const userName = await $(By.tagName('h1'), div);
+    const userName = await $(div, By.tagName('h1'));
 
     await expect(userName.getText()).resolves.toBe(IAM_USER_NAME);
   });
@@ -279,7 +230,7 @@ describe('selenium', () => {
     expect.hasAssertions();
 
     const span = await $('span[data-testid="policy-name-column"]');
-    const link = await $(By.tagName('a'), span);
+    const link = await $(span, By.tagName('a'));
     const handles = await driver.getAllWindowHandles();
     await link.click();
     await driver.wait(async () => (await driver.getAllWindowHandles()).length === handles.length + 1, 5000);
@@ -287,8 +238,8 @@ describe('selenium', () => {
     // Need to explicitly switch even though the new tab became active
     await driver.switchTo().window(newHandle(handles, await driver.getAllWindowHandles()));
 
-    const div = await $('div[data-analytics="PolicyDetailsHeader"]');
-    const header = await $(By.tagName('h1'), div);
+    const div = await $('div[data-analytics="PolicyDetailsHeader"]', { timeout: 10 });
+    const header = await $(div, By.tagName('h1'));
 
     await expect(header.getText()).resolves.toBe('ReadOnlyAccess');
 

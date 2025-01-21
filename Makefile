@@ -1,4 +1,4 @@
-.PHONY: test lint lintfix fmt webpack clean build selenium coverage
+.PHONY: test lint lintfix fmt webpack clean build selenium coverage outdated
 
 build:
 	./scripts/build.sh
@@ -14,7 +14,7 @@ test:
 
 selenium:
 	./scripts/selenium.sh
-	
+
 lint:
 	npx eslint
 
@@ -26,3 +26,6 @@ fmt:
 
 coverage:
 	npx nyc -t coverage --reporter html --reporter text --report-dir coverage/summary report
+
+outdated:
+	npm outdated

@@ -21,10 +21,10 @@ export const hookCoverage = () => {
       let newValue = value;
 
       if (typeof value === 'object') {
+        newValue = new Proxy(value, handler);
         // If we hook __coverage__ and someone does:
         // __coverage__.a = {b: {c: 1}}
         // then the nested objects are not hooked, so the code below recursively proxies all nested objects
-        newValue = new Proxy(value, handler);
         for (const [key, val] of Object.entries(value)) {
           newValue[key] = val;
         }
@@ -32,6 +32,7 @@ export const hookCoverage = () => {
 
       const result = Reflect.set(target, property, newValue, receiver);
       localStorage.setItem(COVERAGE_PREFIX + uuid, JSON.stringify(coverageObj));
+
       return result;
     },
   };

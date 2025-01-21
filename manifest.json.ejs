@@ -14,7 +14,8 @@
   "content_scripts": [
     {
       "matches": ["*://*.aws.amazon.com/*"],
-      "js": ["dist/content_script_isolated.js"],
+      "js": ["dist/isolated.js"],
+      "css": ["dist/main.css"],
       "run_at": "document_start"
     }
   ],
@@ -23,7 +24,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["dist/content_script_main.js"],
+      "resources": ["dist/main.js", "img/color-picker-icon.svg"],
       "matches": ["*://*.aws.amazon.com/*"]
     }
   ],

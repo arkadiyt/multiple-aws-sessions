@@ -11,6 +11,7 @@ import { TOTP } from 'totp-generator';
 import chrome from 'selenium-webdriver/chrome';
 import edge from 'selenium-webdriver/edge';
 import firefox from 'selenium-webdriver/firefox';
+import http from 'node:http';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
@@ -34,8 +35,27 @@ const IAM_USER_NAME = 'read-only';
 
 describe('selenium', () => {
   let driver = null;
+  let logServer = null;
 
   beforeAll(async () => {
+    // Can't open the background page inspector window in Selenium, so create a server which
+    // listens for logs from the background service worker
+    logServer = http.createServer(async (req, res) => {
+      let body = '';
+      for await (const chunk of req) {
+        body += chunk;
+      }
+      console.warn('Background page: ', ...JSON.parse(body));
+      res.writeHead(200);
+      res.end();
+    });
+    logServer.listen(8000);
+
+    // Start the browser
+    if (process.env.SELENIUM_BROWSER === 'edge') {
+      process.env.SELENIUM_BROWSER = 'MicrosoftEdge';
+    }
+
     if (process.env.SELENIUM_BROWSER === 'opera') {
       const operaService = new chrome.ServiceBuilder(process.env.OPERA_DRIVER_PATH).build();
       await operaService.start();
@@ -55,16 +75,20 @@ describe('selenium', () => {
     } else {
       driver = new Builder()
         .setChromeOptions(new chrome.Options().addExtensions(globSync('build/chrome-*.zip')))
-        .setFirefoxOptions(new firefox.Options().addExtensions(globSync('build/firefox-*.zip')))
+        .setFirefoxOptions(new firefox.Options())
         .setEdgeOptions(new edge.Options().addExtensions(globSync('build/edge-*.zip')))
         .build();
+
+      if (process.env.SELENIUM_BROWSER === 'firefox') {
+        // Firefox doesn't support `new firefox.Options().addExtensions(...)`
+        // https://github.com/mozilla/geckodriver/issues/1476
+        await driver.installAddon(globSync('build/firefox-*.zip')[0], true);
+      }
     }
   });
 
   afterAll(async () => {
-    if (driver === null) {
-      return;
-    }
+    logServer.close();
 
     // Fetch the test coverage data before we quit
     try {
@@ -169,7 +193,7 @@ describe('selenium', () => {
     }
   };
 
-  const cmdClickLink = (link) => driver.executeScript('_MAS.cmdClickLink(arguments[0])', link);
+  const cmdClickLink = (link) => driver.actions().keyDown(Key.COMMAND).click(link).keyUp(Key.COMMAND).perform();
 
   const newHandle = (existingHandles, newHandles) =>
     new Set(newHandles).difference(new Set(existingHandles)).values().next().value;
@@ -210,6 +234,9 @@ describe('selenium', () => {
     const originalTab = await driver.getWindowHandle();
     await driver.switchTo().newWindow('tab');
     await driver.get('https://us-east-1.console.aws.amazon.com/console/home');
+
+    // TODO could replace with fetching the login form to confirm we're logged out
+    // then you don't need to wait for the timeout on the session data
     const session = await sessionData();
 
     expect(session).toStrictEqual({});

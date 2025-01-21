@@ -37,19 +37,7 @@ const fetchCoverage = () => {
   });
 };
 
-// "cmd+click" a link so it opens in a new tab
-const cmdClickLink = (link) => {
-  const mouseEvent = new MouseEvent('click', {
-    bubbles: true,
-    cancelable: true,
-    ctrlKey: true,
-    metaKey: true,
-  });
-  link.dispatchEvent(mouseEvent);
-};
-
 // Make these global so Selenium can call them
 globalThis._MAS = {
-  cmdClickLink,
   fetchCoverage,
 };

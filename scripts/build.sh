@@ -7,6 +7,10 @@ mkdir -p build
 
 TARGETS="${TARGETS:-chrome firefox opera edge}"
 
+# TODO could move a lot of this copying into webpack instead, and rendering the EJS too
+# Makes things a little more consolidated. Also lets me make manifest.json.ejs changes and have them appear 
+# since the manifest file would rerender
+# downside: need to rerender webpack 4 times?
 for TARGET in $TARGETS; do
   WORK_DIR=$(mktemp -d)
   cp -r _locales img dist "$WORK_DIR"

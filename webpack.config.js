@@ -1,3 +1,4 @@
+import CopyPlugin from 'copy-webpack-plugin';
 import path from 'node:path';
 import webpack from 'webpack';
 
@@ -6,8 +7,8 @@ export default {
   devtool: process.env.SELENIUM ? 'inline-source-map' : false,
   entry: {
     background: './src/background/background.js',
-    content_script_isolated: './src/content_script/content_script_isolated.js',
-    content_script_main: './src/content_script/content_script_main.js',
+    isolated: './src/content_script/isolated.js',
+    main: './src/content_script/main.js',
   },
   mode: 'none',
   output: {
@@ -30,9 +31,17 @@ export default {
       ],
     },
   }),
-  ...(!process.env.SELENIUM && {
+  plugins: [
+    new CopyPlugin({
+      patterns: [
+        {
+          from: './src/content_script/main.css',
+          to: './main.css',
+        },
+      ],
+    }),
     // There is some coverage instrumentation code under src/selenium/
     // When we're _not_ building for Selenium, replace any 'selenium/*.js' imports with an empty file
-    plugins: [new webpack.NormalModuleReplacementPlugin(/src\/selenium\/.*\.js$/u, 'empty.js')],
-  }),
+    ...(process.env.SELENIUM ? [] : [new webpack.NormalModuleReplacementPlugin(/src\/selenium\/.*\.js$/u, 'empty.js')]),
+  ],
 };

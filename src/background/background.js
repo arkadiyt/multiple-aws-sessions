@@ -1,9 +1,10 @@
 import 'selenium/background.js';
 import { CLEAR_RULE, sessionRulesFromCookieJar } from 'background/session_rules.js';
-import { CMD_INJECT_COOKIES, CMD_LOADED, CMD_PARSE_NEW_COOKIE } from 'shared.js';
+import { CMD_COLOR, CMD_INJECT_COOKIES, CMD_LOADED, CMD_PARSE_NEW_COOKIE } from 'shared.js';
 import { Cookie, cookieHeader } from 'background/cookie.js';
 import { INTERCEPT_URL, RESOURCE_TYPES } from 'background/common.js';
 import { CookieJarStorage } from 'background/storage/cookie_jar.js';
+import { SettingsStorage } from './storage/settings.js';
 
 const sendUpdatedCookiesToTabs = (cookieJar, tabIds) => {
   const promises = tabIds.map((tabId) =>
@@ -180,6 +181,16 @@ chrome.webRequest.onHeadersReceived.addListener(
  */
 (() => {
   const eventHandlers = {
+    [CMD_COLOR]: async (message, _tab, sendResponse) => {
+      // TODO be consistent between existing message passing and sendResponse
+      if (message.color) {
+        // Save new color
+        await SettingsStorage.saveColorForAccount(message.accountId, message.color);
+      } else {
+        // Reply with existing color
+        sendResponse(await SettingsStorage.getColorForAccount(message.accountId));
+      }
+    },
     [CMD_LOADED]: async (_message, tab) => {
       const cookieJar = await CookieJarStorage.getCookieJarFromTabId(tab.id);
       const tabUrl = new URL(tab.url);
@@ -203,20 +214,24 @@ chrome.webRequest.onHeadersReceived.addListener(
     },
   };
 
-  chrome.runtime.onMessage.addListener((message, sender) => {
+  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (sender.id !== chrome.runtime.id) {
-      return;
+      return false;
     }
 
     if (typeof sender.tab === 'undefined') {
-      return;
+      return false;
     }
 
     if (Object.hasOwn(eventHandlers, message.masType) === false) {
-      return;
+      return false;
     }
 
-    eventHandlers[message.masType](message, sender.tab);
+    eventHandlers[message.masType](message, sender.tab, sendResponse);
+
+    // Need to return true to keep the sendResponse handle valid for an async response:
+    // https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/runtime/onMessage
+    return true;
   });
 })();
 

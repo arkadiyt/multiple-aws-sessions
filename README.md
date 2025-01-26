@@ -10,9 +10,11 @@
 
 ### What's it for
 
-Engineers often have a need to sign into multiple AWS accounts (or even a single account with multiple roles), which AWS doesn't allow - when you sign into another account you're signed out of the first one.
+Engineers often have a need to sign into multiple AWS accounts (or even a single account with multiple roles), which AWS didn't allow until recently (and now supports with some limitations).
 
-This extension removes this restriction, and allows you to transparently sign into as many accounts as you want in a single browser window.
+This extension removes this restriction and makes the sign in more transparent, allowing you to sign into as many accounts as you want in a single browser window.
+
+<img src="assets/chrome-1-640x400.png" width="400"/> <img src="assets/chrome-2-640x400.png" width="400"/>
 
 ### Installation
 
@@ -31,12 +33,11 @@ This extension removes this restriction, and allows you to transparently sign in
 git clone https://github.com/arkadiyt/multiple-aws-sessions
 cd multiple-aws-sessions
 npm install
-npx webpack
+make build
 ```
 
-2. Enable loading unpacked extensions in your browser. In Google Chrome this can be done by going into your extension settings (`chrome://extensions/`) and checking the "Developer mode" slider in the upper right corner
+2. Install the relevant extension from the `build/` folder
 
-3. Click the "Load unpacked" button that appeared in the upper left corner and select the folder you cloned this repo into
 
 ### How it works
 
@@ -48,8 +49,8 @@ Here are the permissions used by multiple-aws-sessions and why it requests them.
 
 - `declarativeNetRequest`: This is used to write rules that determine which cookies get sent with requests from different AWS tabs. It is the heart of this extension
 - `storage`: This is used to store cookies and various bookkeeping settings
-- `webRequest`: This is used to hook Set-Cookie response headers from AWS
-- Host permissions for `*://*.aws.amazon.com/*`: This is needed to receive access to Set-Cookie response headers from AWS
+- `webRequest`: This is used to read Set-Cookie response headers from AWS
+- Host permissions for `*://*.aws.amazon.com/*`: This is used to read Set-Cookie response headers from AWS
 
 ### Security
 

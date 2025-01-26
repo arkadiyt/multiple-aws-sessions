@@ -111,7 +111,9 @@ import { CMD_COLOR, CMD_LOADED, CMD_PARSE_NEW_COOKIE } from 'shared.js';
     colorPickerLabel.appendChild(colorPicker);
     div.appendChild(colorPickerLabel);
 
-    nav.style.backgroundColor = await colorPromise;
+    const existingColor = await colorPromise;
+    nav.style.backgroundColor = existingColor;
+    colorPicker.value = existingColor;
     (await waitForElm('#aws-unified-search-container')).appendChild(div);
   };
 

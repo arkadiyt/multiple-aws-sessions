@@ -104,6 +104,7 @@ import { CMD_COLOR, CMD_LOADED, CMD_PARSE_NEW_COOKIE } from 'shared.js';
         accountId: sessionData.accountId,
         color: event.target.value,
         masType: CMD_COLOR,
+        set: true,
       });
     });
 

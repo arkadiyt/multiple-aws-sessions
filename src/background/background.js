@@ -111,7 +111,11 @@ chrome.webRequest.onHeadersReceived.addListener(
           cookies.push(new Cookie(cookieHeaderValue, details.url));
         }
       } else if (headerName === 'location') {
-        location = header.value;
+        if (header.value.startsWith('/')) {
+          location = new URL(details.url).origin + header.value;
+        } else {
+          location = header.value;
+        }
       }
     }
 
@@ -183,7 +187,7 @@ chrome.webRequest.onHeadersReceived.addListener(
   const eventHandlers = {
     [CMD_COLOR]: async (message, _tab, sendResponse) => {
       // TODO be consistent between existing message passing and sendResponse
-      if (message.color) {
+      if (message.set === true) {
         // Save new color
         await SettingsStorage.saveColorForAccount(message.accountId, message.color);
       } else {

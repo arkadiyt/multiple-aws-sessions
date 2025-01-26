@@ -6,9 +6,9 @@ export default {
   // Generate source maps when building for Selenium
   devtool: process.env.SELENIUM ? 'inline-source-map' : false,
   entry: {
-    background: './src/background/background.js',
-    isolated: './src/content_script/isolated.js',
-    main: './src/content_script/main.js',
+    background: 'background/background.js',
+    isolated: 'content_script/isolated.js',
+    main: 'content_script/main.js',
   },
   mode: 'none',
   output: {
@@ -16,7 +16,7 @@ export default {
     path: path.resolve(import.meta.dirname, 'dist'),
   },
   resolve: {
-    modules: [path.resolve('src'), 'node_modules'],
+    modules: ['src', 'node_modules'],
   },
   ...(process.env.SELENIUM && {
     // Use istanbul to generate coverage data when building for Selenium

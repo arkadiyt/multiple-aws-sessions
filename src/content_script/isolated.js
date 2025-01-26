@@ -5,20 +5,20 @@ import { CMD_COLOR, CMD_LOADED, CMD_PARSE_NEW_COOKIE } from 'shared.js';
  * Message passing between main and isolated scripts
  */
 (() => {
-  // Promise for when main world script is ready to handle messages
-  const { promise, resolve } = Promise.withResolvers();
-  let scriptLoaded = false;
   // Inject a script that runs in the main world / has access to hook document.cookie
-  const script = document.createElement('script');
-  script.src = chrome.runtime.getURL('dist/main.js');
-  script.onload = () => {
-    script.remove();
-    scriptLoaded = true;
-    resolve();
-  };
-  // Append to document.documentElement instead of document.head - the latter isn't defined when we run
-  // at document_start
-  document.documentElement.appendChild(script);
+  let scriptLoaded = false;
+  const scriptLoadedPromise = Promise.new((resolve) => {
+    const script = document.createElement('script');
+    script.src = chrome.runtime.getURL('dist/main.js');
+    script.onload = () => {
+      script.remove();
+      scriptLoaded = true;
+      resolve();
+    };
+    // Append to document.documentElement instead of document.head - the latter isn't defined when we run
+    // at document_start
+    document.documentElement.appendChild(script);
+  });
 
   // Messages from the background service worker to us, which we forward to the main world script
   chrome.runtime.onMessage.addListener(async (message, sender) => {
@@ -27,15 +27,13 @@ import { CMD_COLOR, CMD_LOADED, CMD_PARSE_NEW_COOKIE } from 'shared.js';
     }
 
     // Doing an `await` will pause until the next tick even if the promise is already fulfilled, so only await if needed
+    // This helps ensure we inject cookies into the main world before any AWS's javascript tries to read them
     if (scriptLoaded !== true) {
-      await promise;
+      await scriptLoadedPromise;
     }
 
     postMessage(message);
   });
-
-  // Tell the background service worker we're ready to process any already-received cookies
-  chrome.runtime.sendMessage({ masType: CMD_LOADED });
 
   // Messages from the main world script to us, which we forward to the background service worker
   window.addEventListener('message', (event) => {
@@ -49,6 +47,9 @@ import { CMD_COLOR, CMD_LOADED, CMD_PARSE_NEW_COOKIE } from 'shared.js';
 
     chrome.runtime.sendMessage(event.data);
   });
+
+  // Tell the background service worker we're ready to process any already-received cookies
+  chrome.runtime.sendMessage({ masType: CMD_LOADED });
 })();
 
 /**

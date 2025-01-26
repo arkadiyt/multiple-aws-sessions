@@ -52,7 +52,6 @@ chrome.tabs.onCreated.addListener(async (details) => {
     typeof details.pendingUrl === 'undefined' && details.status !== 'complete' ? void 0 : details.openerTabId;
 
   const cookieJar = await CookieJarStorage.getCookieJarFromTabId(details.openerTabId);
-  // TODO This is very subtle usage of when to use which openerTabId / needs more documentation
   const tabIds = await CookieJarStorage.setCookieJarIdForTab(
     details.id,
     cookieJar.length() === 0 ? void 0 : openerTabId,
@@ -186,12 +185,9 @@ chrome.webRequest.onHeadersReceived.addListener(
 (() => {
   const eventHandlers = {
     [CMD_COLOR]: async (message, _tab, sendResponse) => {
-      // TODO be consistent between existing message passing and sendResponse
       if (message.set === true) {
-        // Save new color
         await SettingsStorage.saveColorForAccount(message.accountId, message.color);
       } else {
-        // Reply with existing color
         sendResponse(await SettingsStorage.getColorForAccount(message.accountId));
       }
     },

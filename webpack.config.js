@@ -12,6 +12,7 @@ export default {
   },
   mode: 'none',
   output: {
+    clean: true,
     filename: '[name].js',
     path: path.resolve(import.meta.dirname, 'dist'),
   },

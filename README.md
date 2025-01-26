@@ -38,7 +38,6 @@ make build
 
 2. Install the relevant extension from the `build/` folder
 
-
 ### How it works
 
 See this blog post:

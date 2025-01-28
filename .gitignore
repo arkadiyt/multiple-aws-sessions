@@ -3,5 +3,4 @@
 build/
 coverage/
 dist/
-manifest.json
 node_modules/

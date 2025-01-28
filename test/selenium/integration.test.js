@@ -232,6 +232,7 @@ describe(`selenium (${process.env.SELENIUM_BROWSER})`, () => {
     const span = await $('span[data-testid="policy-name-column"]');
     const link = await $(span, By.tagName('a'));
     const handles = await driver.getAllWindowHandles();
+    const currentHandle = await driver.getWindowHandle();
     await link.click();
     await driver.wait(async () => (await driver.getAllWindowHandles()).length === handles.length + 1, 5000);
 
@@ -244,7 +245,7 @@ describe(`selenium (${process.env.SELENIUM_BROWSER})`, () => {
     await expect(header.getText()).resolves.toBe('ReadOnlyAccess');
 
     await driver.close();
-    await driver.switchTo().window(handles[0]);
+    await driver.switchTo().window(currentHandle);
   });
 
   it.todo('signs in using AssumeRoleWithSAML');

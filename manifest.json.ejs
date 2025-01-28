@@ -1,21 +1,21 @@
 {
   "name": "__MSG_appName__",
-  "version": "0.0.11",
+  "version": "<%= version %>",
   "description": "__MSG_appDesc__",
   "default_locale": "en_US",
   "permissions": ["declarativeNetRequest", "storage", "webRequest"],
   "background": {
     <% if (target === 'firefox') { %>
-      "scripts": ["dist/background.js"]
+      "scripts": ["js/background.js"]
     <% } else { %>
-    "service_worker": "dist/background.js"
+      "service_worker": "js/background.js"
     <% } %>
   },
   "content_scripts": [
     {
       "matches": ["*://*.aws.amazon.com/*"],
-      "js": ["dist/isolated.js"],
-      "css": ["dist/main.css"],
+      "js": ["js/isolated.js"],
+      "css": ["css/main.css"],
       "run_at": "document_start"
     }
   ],
@@ -24,7 +24,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["dist/main.js", "img/color-picker-icon.svg"],
+      "resources": ["js/main.js", "img/color-picker-icon.svg"],
       "matches": ["*://*.aws.amazon.com/*"]
     }
   ],

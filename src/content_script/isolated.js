@@ -7,7 +7,7 @@ import { CMD_COLOR, CMD_LOADED, CMD_PARSE_NEW_COOKIE } from 'shared.js';
 (() => {
   // Inject a script that runs in the main world / has access to hook document.cookie
   let scriptLoaded = false;
-  const scriptLoadedPromise = Promise.new((resolve) => {
+  const scriptLoadedPromise = new Promise((resolve) => {
     const script = document.createElement('script');
     script.src = chrome.runtime.getURL('dist/main.js');
     script.onload = () => {

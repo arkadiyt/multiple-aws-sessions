@@ -1,5 +1,8 @@
 import CopyPlugin from 'copy-webpack-plugin';
+import ZipPlugin from 'zip-webpack-plugin';
+import ejs from 'ejs';
 import path from 'node:path';
+import { readFileSync } from 'node:fs';
 import webpack from 'webpack';
 
 export default {
@@ -14,7 +17,7 @@ export default {
   output: {
     clean: true,
     filename: '[name].js',
-    path: path.resolve(import.meta.dirname, 'dist'),
+    path: path.resolve(import.meta.dirname, 'dist/js'),
   },
   resolve: {
     modules: ['src', 'node_modules'],
@@ -36,13 +39,37 @@ export default {
     new CopyPlugin({
       patterns: [
         {
-          from: './src/content_script/main.css',
-          to: './main.css',
+          from: 'src/content_script/main.css',
+          to: path.resolve(import.meta.dirname, 'dist/css/main.css'),
+        },
+        {
+          from: '_locales',
+          to: path.resolve(import.meta.dirname, 'dist/_locales'),
+        },
+        {
+          from: 'img',
+          to: path.resolve(import.meta.dirname, 'dist/img'),
+        },
+        {
+          from: 'manifest.json.ejs',
+          to: path.resolve(import.meta.dirname, 'dist/manifest.json'),
+          transform(content) {
+            return ejs.render(content.toString(), { target: process.env.TARGET, version: readFileSync('.version') });
+          },
         },
       ],
     }),
     // There is some coverage instrumentation code under src/selenium/
     // When we're _not_ building for Selenium, replace any 'selenium/*.js' imports with an empty file
     ...(process.env.SELENIUM ? [] : [new webpack.NormalModuleReplacementPlugin(/src\/selenium\/.*\.js$/u, 'empty.js')]),
+    ...(process.env.ZIP
+      ? [
+          new ZipPlugin({
+            filename: `${process.env.TARGET}-${readFileSync('.version')}`,
+            path: path.resolve(import.meta.dirname, 'build'),
+            pathPrefix: 'js',
+          }),
+        ]
+      : []),
   ],
 };

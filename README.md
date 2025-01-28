@@ -12,7 +12,7 @@
 
 Engineers often have a need to sign into multiple AWS accounts (or even a single account with multiple roles), which AWS didn't allow until recently (and now supports with some limitations).
 
-This extension removes this restriction and makes the sign in more transparent, allowing you to sign into as many accounts as you want in a single browser window.
+This extension lets you sign into as many AWS accounts as you want in a single browser window, makes the sign in more transparent, and lets you select a header color for each AWS account.
 
 <img src="assets/chrome-1-640x400.png" width="400"/> <img src="assets/chrome-2-640x400.png" width="400"/>
 

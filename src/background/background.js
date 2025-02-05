@@ -124,6 +124,8 @@ chrome.webRequest.onHeadersReceived.addListener(
     }
 
     if (
+      // TODO need to check this value is prevent for firefox/opera/edge and has the right prefix
+      details.initiator !== `chrome-extension://${chrome.runtime.id}` &&
       details.parentFrameId === -1 &&
       details.type === 'main_frame' &&
       details.method === 'GET' &&

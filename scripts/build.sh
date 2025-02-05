@@ -9,5 +9,8 @@ for TARGET in $TARGETS; do
 
   if [ "$TARGET" = "firefox" ]; then  
     npx web-ext lint -s dist
+    if [ -n "$RUN" ]; then
+      npx web-ext run -s dist --devtools
+    fi
   fi
 done

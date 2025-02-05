@@ -24,6 +24,8 @@
   border-style: solid;
   vertical-align: middle;
   background-image: url('chrome-extension://__MSG_@@extension_id__/img/color-picker-icon.svg');
+  /*TODO need to set url based on browser I'm in*/
+  /* moz-extension:// */
   background-repeat: no-repeat;
   background-position: center center;
 }

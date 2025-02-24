@@ -19,7 +19,7 @@
     "jest-environment-steps": "^1.1.1",
     "nyc": "^17.0.0",
     "prettier": "^3.5.1",
-    "selenium-webdriver": "^4.28.0",
+    "selenium-webdriver": "^4.29.0",
     "totp-generator": "^1.0.0",
     "web-ext": "^8.4.0",
     "webpack-cli": "^6.0.1",

@@ -14,7 +14,7 @@
     "eslint": "^9.26.0",
     "eslint-config-prettier": "^10.1.2",
     "eslint-plugin-jest": "^28.10.0",
-    "globals": "^16.0.0",
+    "globals": "^16.1.0",
     "jest": "^29.7.0",
     "jest-environment-steps": "^1.1.1",
     "nyc": "^17.0.0",

@@ -5,7 +5,7 @@
   },
   "devDependencies": {
     "@aws-sdk/client-sts": "^3.806.0",
-    "@eslint/js": "^9.26.0",
+    "@eslint/js": "^9.27.0",
     "babel-loader": "^10.0.0",
     "babel-plugin-istanbul": "^7.0.0",
     "copy-webpack-plugin": "^13.0.0",
